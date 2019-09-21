@@ -1,0 +1,8 @@
+{
+	"log_path": "./test/log",
+	"max_log_file_num":10.
+	"max_log_file_size":1024.
+	"data_path":"",
+	"uid":1000,
+	"gid":1000
+}

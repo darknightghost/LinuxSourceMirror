@@ -1,0 +1,73 @@
+#! /usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import os
+import argparse
+import pathlib
+import json
+import logging
+import logging.handlers
+import sys
+
+
+def main():
+    # Parse arguments.
+    parser = argparse.ArgumentParser(description="simple linux update mirror.")
+    parser.add_argument("-d",
+                        "--daemon",
+                        help="run as daemon.",
+                        action="store_true")
+    parser.add_argument("-c",
+                        "--config",
+                        type=str,
+                        help="path of config file.",
+                        default="/etc/mirror-server-conf.json")
+    args = parser.parse_args()
+
+    # Load config
+    # Initialize logger
+    if args.daemon:
+        # Run as daemon
+        ret = daemon()
+        if ret != 0:
+            return ret
+
+    return 0
+
+
+def daemon():
+    pass
+
+
+def load_config(path):
+    pass
+
+
+def init_log(path, level, max_file_num, max_file_size):
+    '''
+        Initialize logger.
+    '''
+    # Create directory
+    p = pathlib.Path(path)
+    if not p.parent.exists():
+        p.parent.mkdir(parents=True, exist_ok=False)
+
+    # Initialize logger
+    handlers = [
+        logging.handlers.RotatingFileHandler(path,
+                                             maxBytes=max_file_size,
+                                             backupCount=max_file_num,
+                                             encoding="utf-8"),
+        logging.StreamHandler()
+    ]
+    logging.basicConfig(level=level, handlers=handlers)
+    return
+
+
+if __name__ == "__main__":
+    try:
+        exit(main())
+
+    except Exception as e:
+        logger.exception(sys.exc_info())
+        raise e
