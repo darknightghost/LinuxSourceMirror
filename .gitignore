@@ -10,3 +10,6 @@ __pycache__/*
 pack/*
 main.spec
 *.log
+test/*
+.directory
+!.gitkeep

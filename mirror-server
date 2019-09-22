@@ -4,10 +4,10 @@
 import os
 import argparse
 import pathlib
-import json
 import logging
 import logging.handlers
 import sys
+import config
 
 
 def main():
@@ -15,7 +15,7 @@ def main():
     parser = argparse.ArgumentParser(description="simple linux update mirror.")
     parser.add_argument("-d",
                         "--daemon",
-                        help="run as daemon.",
+                        help="run as daemon, only root can use this option.",
                         action="store_true")
     parser.add_argument("-c",
                         "--config",
@@ -25,27 +25,63 @@ def main():
     args = parser.parse_args()
 
     # Load config
-    # Initialize logger
+    config.config.load_config(args.config)
+
     if args.daemon:
+        if os.geteuid() != 0:
+            raise PermissionError(
+                "Only root can run the server in daemon mode.")
+
         # Run as daemon
         ret = daemon()
         if ret != 0:
             return ret
 
+    # Initialize logger
+    init_log(config.config.log_path(), config.config.log_level(),
+             config.config.max_log_file_num(),
+             config.config.max_log_file_size())
+
+    # Start service
+    logging.info("Starting service...")
+
     return 0
 
 
 def daemon():
-    pass
+    pid = os.fork()
 
+    if pid < 0:
+        raise Exception("Failed to fork a child process.")
 
-def load_config(path):
-    pass
+    elif pid > 0:
+        print("Damon process created, pid = %d." % (pid))
+        exit(0)
+
+    else:
+        # Create new session
+        #os.setsid()
+
+        # Switch stdin, stdout & stderr to /dev/null
+        fd_in = os.open("/dev/null", os.O_RDONLY)
+        fd_out = os.open("/dev/null", os.O_APPEND | os.O_WRONLY)
+        #os.dup2(0, fd_in)
+        #os.dup2(1, fd_out)
+        #os.dup2(2, fd_out)
+
+        os.umask(0)
+        os.setgid(config.config.gid())
+        os.setuid(config.config.uid())
 
 
 def init_log(path, level, max_file_num, max_file_size):
     '''
         Initialize logger.
+
+        :param  path            :  Path of data directory, :class:`str` object.
+        :param  level           :  Log level, :class:`str` object.
+        :param  max_file_num    :  Maxium number of log file, :class:`int` object.
+        :param  max_file_size   :  Maxium size of each log file, :class:`int` object.
     '''
     # Create directory
     p = pathlib.Path(path)
@@ -69,5 +105,5 @@ if __name__ == "__main__":
         exit(main())
 
     except Exception as e:
-        logger.exception(sys.exc_info())
-        raise e
+        logging.exception(sys.exc_info())
+        exit(-1)
