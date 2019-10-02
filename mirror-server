@@ -63,7 +63,7 @@ def main():
                                   gid=config.config.gid(),
                                   files_preserve=logger_io,
                                   detach_process=True,
-                                  daemon.pidlockfile.PIDLockFile(
+                                  pidfile=daemon.pidlockfile.PIDLockFile(
                                       config.config.pid_file()),
                                   umask=UMASK):
             return service()
