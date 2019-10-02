@@ -24,7 +24,6 @@ class Client(client.Client, threading.Thread):
         """
         client.Client.__init__(self, data_path, distros)
         threading.Thread.__init__(self)
-        self.__cond = threading.Condition()
 
     def default_config():
         """Get default config.
@@ -52,10 +51,8 @@ class Client(client.Client, threading.Thread):
     def stop(self):
         """Stop service.
         """
-        self.__cond.acquire()
         self.__run = False
-        self.__cond.wait()
-        self.__cond.release()
+        self.join()
 
     def run(self):
         """Working thread
@@ -86,10 +83,6 @@ class Client(client.Client, threading.Thread):
             logging.info(
                 "Synchronization process of distro \"%s\" has been killed." %
                 (distro))
-
-        self.__cond.acquire()
-        self.__cond.notifyAll()
-        self.__cond.release()
 
     def __pool(self):
         """Pool all tasks.

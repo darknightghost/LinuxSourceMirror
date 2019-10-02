@@ -97,6 +97,8 @@ def service():
         return ret
 
     for c in client.get_protocols():
+        #TODO
+        break
         logging.info("Starting client \"%s\"..." % (c.Client.name()))
         distros = []
         for d in config.config.distros():

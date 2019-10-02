@@ -106,7 +106,6 @@ class __Config:
         try:
             for k in jsonData["distros"]:
                 self.__distros[k] = jsonData["distros"][k]
-                print("%s:%s" % (k, jsonData["distros"][k]))
 
         except KeyError:
             raise KeyError("Key \"distros\" is required in  conmfig file!")
