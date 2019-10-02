@@ -62,6 +62,7 @@ def main():
         with daemon.DaemonContext(uid=config.config.uid(),
                                   gid=config.config.gid(),
                                   files_preserve=logger_io,
+                                  detach_process=True,
                                   umask=UMASK):
             return service()
 
