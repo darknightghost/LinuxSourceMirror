@@ -4,6 +4,7 @@
 import pkgutil
 import sys
 import importlib
+import pathlib
 
 
 class Client:
@@ -30,6 +31,29 @@ class Client:
         
         :return:    Name of protocol.
         :rtype:     :class:`str`
+        """
+        raise NotImplementedError()
+
+    def distro_path(self, distro):
+        """Get path of distro.
+
+        :param  distro:     Name of distro, :class:`str` object.
+        :return:    Path.
+        :rtype:     :class:`str`
+        """
+        path = pathlib.Path(self._data_path) / pathlib.Path(distro)
+        if not path.exists():
+            path.mkdir(0o775, parents=True, exist_ok=True)
+
+        return str(path.absolute())
+
+    def start(self):
+        """Start service.
+        """
+        raise NotImplementedError()
+
+    def stop(self):
+        """Stop service.
         """
         raise NotImplementedError()
 

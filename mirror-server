@@ -8,6 +8,15 @@ import logging
 import logging.handlers
 import sys
 import config
+import daemon
+import server
+import client
+import signal
+import time
+import urllib
+import urllib.parse
+
+UMASK = ~0o775
 
 
 def main():
@@ -24,54 +33,133 @@ def main():
                         default="/etc/mirror-server-conf.json")
     args = parser.parse_args()
 
+    os.umask(UMASK)
+
     # Load config
     config.config.load_config(args.config)
-
-    if args.daemon:
-        if os.geteuid() != 0:
-            raise PermissionError(
-                "Only root can run the server in daemon mode.")
-
-        # Run as daemon
-        ret = daemon()
-        if ret != 0:
-            return ret
 
     # Initialize logger
     init_log(config.config.log_path(), config.config.log_level(),
              config.config.max_log_file_num(),
              config.config.max_log_file_size())
 
-    # Start service
-    logging.info("Starting service...")
+    if args.daemon:
+        if os.geteuid() != 0:
+            raise PermissionError(
+                "Only root can run the server in daemon mode.")
 
-    return 0
+        # Get logging file streams
+        logger = logging.getLogger()
+        logger_io = [handler.stream for handler in logger.handlers]
 
+        # Change owner of log files
+        for f in logger_io:
+            fd = f.fileno()
+            if fd not in (0, 1, 2) and f.writable():
+                os.fchown(fd, config.config.uid(), config.config.gid())
 
-def daemon():
-    pid = os.fork()
-
-    if pid < 0:
-        raise Exception("Failed to fork a child process.")
-
-    elif pid > 0:
-        print("Damon process created, pid = %d." % (pid))
-        exit(0)
+        # Run as daemon
+        with daemon.DaemonContext(uid=config.config.uid(),
+                                  gid=config.config.gid(),
+                                  files_preserve=logger_io,
+                                  umask=UMASK):
+            return service()
 
     else:
-        # Create new session
-        #os.setsid()
+        return service()
 
-        # Switch stdin, stdout & stderr to /dev/null
-        fd_in = os.open("/dev/null", os.O_RDONLY)
-        fd_out = os.open("/dev/null", os.O_APPEND | os.O_WRONLY)
-        #os.dup2(0, fd_in)
-        #os.dup2(1, fd_out)
-        #os.dup2(2, fd_out)
 
-        os.umask(0)
-        os.setgid(config.config.gid())
-        os.setuid(config.config.uid())
+# Run flag
+run = True
+
+
+def service():
+    # Start service
+    logging.info("Starting service...")
+    logging.info("uid:%d, gid:%d, Working directory:\"%s\"." %
+                 (os.getuid(), os.getgid(), os.getcwd()))
+
+    services = []
+
+    def clean_up():
+        ret = 0
+        for s in services:
+            logging.info("Stopping service \"%s\"..." % (s.name()))
+            try:
+                s.stop()
+                logging.info("Service \"%s\" stopped." % (s.name()))
+
+            except Exception as e:
+                logging.exception(sys.exc_info())
+                logging.exception("Failed to stop service \"%s\"." %
+                                  (s.name()))
+
+        return ret
+
+    for c in client.get_protocols():
+        logging.info("Starting client \"%s\"..." % (c.Client.name()))
+        distros = []
+        for d in config.config.distros():
+            url = config.config.distro_url(d)
+            parse_result = urllib.parse.urlparse(url)
+            if parse_result.scheme == c.Client.name():
+                distros.append(d)
+                logging.info("Found url \"%s\" for client \"%s\"." %
+                             (url, c.Client.name()))
+
+        service = c.Client(config.config.data_path(), distros)
+        try:
+            service.start()
+
+        except Exception as e:
+            clean_up()
+            logging.exception(sys.exc_info())
+            return -1
+
+        services.insert(0, service)
+        logging.info("Service \"%s\" started." % (service.name()))
+
+    for s in server.get_protocols():
+        logging.info("Starting server \"%s\"..." % (s.Server.name()))
+        distros = []
+        for d in config.config.distros():
+            if s.Server.name() in config.config.distro_servers(d):
+                distros.append(d)
+                logging.info("Found distro \"%s\" for server \"%s\"." %
+                             (d, s.Server.name()))
+
+        service = s.Server(config.config.data_path(), distros)
+        try:
+            service.start()
+
+        except Exception as e:
+            clean_up()
+            logging.exception(sys.exc_info())
+            return -1
+
+        services.insert(0, service)
+        logging.info("Service \"%s\" started." % (service.name()))
+
+    logging.info("Service started.")
+
+    # Wait
+    def stopRunning(signum, s):
+        global run
+        logging.info("Signal %s caught." % (signal.Signals(signum).name))
+        run = False
+
+    signal.signal(signal.SIGINT, stopRunning)
+    signal.signal(signal.SIGTERM, stopRunning)
+    signal.signal(signal.SIGHUP, stopRunning)
+
+    while run:
+        time.sleep(0.5)
+
+    # Stop service
+    ret = clean_up()
+    logging.info("Service stopped.")
+
+    return ret
 
 
 def init_log(path, level, max_file_num, max_file_size):
@@ -96,7 +184,11 @@ def init_log(path, level, max_file_num, max_file_size):
                                              encoding="utf-8"),
         logging.StreamHandler()
     ]
-    logging.basicConfig(level=level, handlers=handlers)
+    logging.basicConfig(
+        format=
+        "%(asctime)s, File:\"%(filename)s\", Line:%(lineno)s, [%(levelname)s]: %(message)s",
+        level=level,
+        handlers=handlers)
     return
 
 

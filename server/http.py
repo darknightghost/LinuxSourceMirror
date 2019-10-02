@@ -29,3 +29,13 @@ class Server(server.Server):
         :rtype:     :class:`str`
         """
         return "http"
+
+    def start(self):
+        """Start service.
+       """
+        pass
+
+    def stop(self):
+        """Stop service.
+        """
+        pass

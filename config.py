@@ -19,7 +19,7 @@ class __Config:
             "log_path": "./test/log",  # Path of log file.
             "log_level": logging.INFO,  # Log level.
             "max_log_file_num": 10,  # Maxium number of log file.
-            "max_log_file_size": 1024,  # Maxium size of log file.
+            "max_log_file_size": 104857600,  # Maxium size of log file.
             "data_path": "/mirror",  # Path of data.
             "uid": 1000,  # UID, only available when running as daemon.
             "gid": 1000  # GID, only available when running as daemon.
@@ -54,6 +54,9 @@ class __Config:
                     raise TypeError("Option %s in config file \"%s\" should " \
                             "be an instance of \"%s\"."%(k, path,
                                 str(type(self.__base_configs[k]))))
+
+                else:
+                    self.__base_configs[k] = newVal
 
             elif k not in ("client_protocols", "server_protocols", "distros"):
                 logging.warning("Unknow option \"%s\" in config file \"%s\"!" %
@@ -102,7 +105,8 @@ class __Config:
         # Load distro configs
         try:
             for k in jsonData["distros"]:
-                pass
+                self.__distros[k] = jsonData["distros"][k]
+                print("%s:%s" % (k, jsonData["distros"][k]))
 
         except KeyError:
             raise KeyError("Key \"distros\" is required in  conmfig file!")
@@ -193,14 +197,23 @@ class __Config:
 
         return ret
 
-    def distro_cfg(self, name):
-        """Get config of server protocol.
+    def distro_url(self, name):
+        """Get url of server protocol.
 
         :param      name:   Name of distro, :class:`str`.
-        :return:    Config of server protocol.
+        :return:    URL of remote server.
         :rtype:     :class: `str`
         """
-        return self.__distros[name]
+        return self.__distros[name]["url"]
+
+    def distro_servers(self, name):
+        """Get config of server protocol.
+
+        :param      name:   Local servers of distro, :class:`str`.
+        :return:    List of servers.
+        :rtype:     :class: `list`
+        """
+        return self.__distros[name]["servers"]
 
 
 config = __Config()
