@@ -9,6 +9,7 @@ import logging.handlers
 import sys
 import config
 import daemon
+import daemon.pidfile
 import server
 import client
 import signal
@@ -63,7 +64,7 @@ def main():
                                   gid=config.config.gid(),
                                   files_preserve=logger_io,
                                   detach_process=True,
-                                  pidfile=daemon.pidlockfile.PIDLockFile(
+                                  pidfile=daemon.pidfile.PIDLockFile(
                                       config.config.pid_file()),
                                   umask=UMASK):
             return service()
