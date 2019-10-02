@@ -15,6 +15,7 @@ import signal
 import time
 import urllib
 import urllib.parse
+import lockfile
 
 UMASK = ~0o775
 
@@ -63,6 +64,8 @@ def main():
                                   gid=config.config.gid(),
                                   files_preserve=logger_io,
                                   detach_process=True,
+                                  pidfile=lockfile.FileLock(
+                                      config.config.pid_file()),
                                   umask=UMASK):
             return service()
 

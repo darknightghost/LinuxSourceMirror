@@ -22,7 +22,8 @@ class __Config:
             "max_log_file_size": 104857600,  # Maxium size of log file.
             "data_path": "/mirror",  # Path of data.
             "uid": 1000,  # UID, only available when running as daemon.
-            "gid": 1000  # GID, only available when running as daemon.
+            "gid": 1000,  # GID, only available when running as daemon.
+            "pid_file": "/run/linux-mirror.pid"  # PID file.
         }
 
         # Client protocols
@@ -165,6 +166,14 @@ class __Config:
         :rtype:     :class: `str`
         """
         return self.__base_configs["gid"]
+
+    def pid_file(self):
+        """Get path of pid file.
+
+        :return:    Path of pid file.
+        :rtype:     :class: `str`
+        """
+        return self.__base_configs["pid_file"]
 
     def client_protocol_cfg(self, name):
         """Get config of client protocol.
