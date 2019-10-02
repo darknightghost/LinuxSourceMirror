@@ -64,7 +64,7 @@ class Client(client.Client, threading.Thread):
 
         while self.__run:
             time.sleep(self.SLEEP_TIME)
-            self.__pool()
+            self.__poll()
             for distro in self.__seconds:
                 self.__seconds[distro] += self.SLEEP_TIME
                 if self.__seconds[distro] >= self.__config["interval"] and len(
@@ -84,8 +84,8 @@ class Client(client.Client, threading.Thread):
                 "Synchronization process of distro \"%s\" has been killed." %
                 (distro))
 
-    def __pool(self):
-        """Pool all tasks.
+    def __poll(self):
+        """Poll all tasks.
         """
         for distro in list(self.__tasks.keys()):
             task = self.__tasks[distro]
