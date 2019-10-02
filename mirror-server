@@ -59,6 +59,13 @@ def main():
             if fd not in (0, 1, 2) and f.writable():
                 os.fchown(fd, config.config.uid(), config.config.gid())
 
+        # Create directory of pid file
+        pid_path = pathlib.Path(config.config.pid_file())
+        pid_path_parent = pid_path.parent()
+        pid_path_parent.mkdir(0o775, parents=True, exist_ok=True)
+        os.chown(str(pid_path_parent), config.config.uid(),
+                 config.config.gid())
+
         # Run as daemon
         with daemon.DaemonContext(uid=config.config.uid(),
                                   gid=config.config.gid(),

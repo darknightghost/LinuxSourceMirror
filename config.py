@@ -23,7 +23,7 @@ class __Config:
             "data_path": "/mirror",  # Path of data.
             "uid": 1000,  # UID, only available when running as daemon.
             "gid": 1000,  # GID, only available when running as daemon.
-            "pid_file": "/run/linux-mirror.pid"  # PID file.
+            "pid_file": "/run/linux-mirror/linux-mirror.pid"  # PID file.
         }
 
         # Client protocols
