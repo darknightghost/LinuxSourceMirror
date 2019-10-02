@@ -61,7 +61,7 @@ def main():
 
         # Create directory of pid file
         pid_path = pathlib.Path(config.config.pid_file())
-        pid_path_parent = pid_path.parent()
+        pid_path_parent = pid_path.parent
         pid_path_parent.mkdir(0o775, parents=True, exist_ok=True)
         os.chown(str(pid_path_parent), config.config.uid(),
                  config.config.gid())
