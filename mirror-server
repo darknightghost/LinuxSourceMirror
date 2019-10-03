@@ -82,9 +82,6 @@ def main():
         return service()
 
 
-# Run flag
-
-
 def service():
     # Start service
     logging.info("Starting service...")
@@ -156,9 +153,8 @@ def service():
 
     # Wait
     def stopRunning(signum, s):
-        global run
         logging.info("Signal %s caught." % (signal.Signals(signum).name))
-        run = False
+        runstatus.exit_code(0)
 
     signal.signal(signal.SIGINT, stopRunning)
     signal.signal(signal.SIGTERM, stopRunning)
