@@ -6,7 +6,7 @@
 	"data_path":"/pool/mirror",
 	"uid":1000,
 	"gid":983,
-         "pid_file":"/run/linux-mirror/linux-mirror.pid",
+        "pid_file":"/run/linux-mirror/linux-mirror.pid",
 	"client_protocols" : {
 		"rsync" : {
 			"exec":"rsync",
