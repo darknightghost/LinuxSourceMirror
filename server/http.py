@@ -113,7 +113,7 @@ class RequestHandlerTemplate(http.server.SimpleHTTPRequestHandler):
                 displayname = name + "/"
                 linkname = name + "/"
 
-            r.append('<tr><td><a href="%s">%s</a></td><td></td>%s</tr>\n' %
+            r.append('<tr><td><a href="%s">%s</a></td>%s<td></td></tr>\n' %
                      (urllib.parse.quote(linkname, errors='surrogatepass'),
                       html.escape(displayname, quote=False),
                       config.config.distro_url(name)))
