@@ -104,7 +104,9 @@ class RequestHandlerTemplate(http.server.SimpleHTTPRequestHandler):
         r.append('<title>%s</title>\n</head>' % title)
         r.append('<body>\n<h1>%s</h1>' % title)
         r.append('<hr>\n<table border=\"0\" width="100%" align="left">\n')
-        r.append('<tr><th>Distro</th><th>Source</th></tr>\n')
+        r.append(
+            '<tr><th align="left">Distro</th><th align="left">Source</th></tr>\n'
+        )
         for name in self._distros:
             fullname = os.path.join(path, name)
             displayname = linkname = name
@@ -162,7 +164,9 @@ class RequestHandlerTemplate(http.server.SimpleHTTPRequestHandler):
         r.append('<title>%s</title>\n</head>' % title)
         r.append('<body>\n<h1>%s</h1>' % title)
         r.append('<hr>\n<table border=\"0\" width="100%" align="left">\n')
-        r.append('<tr><th>Name</th><th>Size</th><th>Last Modified</th></tr>\n')
+        r.append(
+            '<tr><th align="left">Name</th><th align="left">Size</th><th align="left">Last Modified</th></tr>\n'
+        )
         for name in list:
             fullname = os.path.join(path, name)
             displayname = linkname = name

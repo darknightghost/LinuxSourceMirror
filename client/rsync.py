@@ -120,6 +120,9 @@ class Client(client.Client, threading.Thread):
                 del self.__tasks[distro]
 
             else:
+                if exit_code == 20 and not self.__run:
+                    break
+
                 try:
                     logging.error("Rsync failed with exit code %d when " \
                             "synchronizing distro \"%s\" from \"%s\" : %s" % (exit_code,
