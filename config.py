@@ -63,7 +63,7 @@ class __Config:
                 logging.warning("Unknow option \"%s\" in config file \"%s\"!" %
                                 (k, path))
 
-        # Load clent configs
+        # Load client configs
         if "client_protocols" in jsonData:
             for k in jsonData["client_protocols"]:
                 if k in self.__client_protocols:

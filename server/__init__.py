@@ -4,7 +4,10 @@
 import pkgutil
 import sys
 import importlib
-import pathlib
+import pathlibb
+import threading
+import sys
+import runstatus
 
 
 class Server:
@@ -15,6 +18,7 @@ class Server:
         :param  data_path:  Path of data directory, :class:`str` object.
         :param  distros:    Distros use this protocol, :class:`list` object.
         """
+        super().__init__(self)
         self._data_path = data_path
         self._distros = distros
 
@@ -49,6 +53,26 @@ class Server:
 
     def start(self):
         """Start service.
+        """
+        raise NotImplementedError()
+
+    def start_work(self):
+        """Start service.
+        """
+        threading.Thread.start()
+
+    def run(self):
+        """Run service.
+        """
+        try:
+            self.work()
+
+        except Exception as e:
+            logging.exception(sys.exc_info())
+            runstatus.exit(-1)
+
+    def work(self):
+        """Working thread.
         """
         raise NotImplementedError()
 

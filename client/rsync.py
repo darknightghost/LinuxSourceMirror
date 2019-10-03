@@ -6,13 +6,12 @@ import config
 import urllib
 import urllib.parse
 import logging
-import threading
 import time
 import subprocess
 import signal
 
 
-class Client(client.Client, threading.Thread):
+class Client(client.Client):
     """Rsync protocol."""
     SLEEP_TIME = 0.5
     EXIT_CODES = {
@@ -37,14 +36,13 @@ class Client(client.Client, threading.Thread):
         30: "Timeout in data send/receive"
     }
 
-    def __init__(self, data_path, distros):
+    def __init__(self, *args):
         """Constructor.
 
         :param  data_path:  Path of data directory, :class:`str` object.
         :param  distros:    Distros use this protocol, :class:`list` object.
         """
-        client.Client.__init__(self, data_path, distros)
-        threading.Thread.__init__(self)
+        super().__init__(*args)
 
     def default_config():
         """Get default config.
@@ -67,7 +65,7 @@ class Client(client.Client, threading.Thread):
         """
         self.__config = config.config.client_protocol_cfg(self.name())
         self.__run = True
-        threading.Thread.start(self)
+        self.start_work()
 
     def stop(self):
         """Stop service.
@@ -75,7 +73,7 @@ class Client(client.Client, threading.Thread):
         self.__run = False
         self.join()
 
-    def run(self):
+    def work(self):
         """Working thread
         """
         self.__tasks = {}

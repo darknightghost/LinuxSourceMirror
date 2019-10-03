@@ -10,12 +10,14 @@ import sys
 import config
 import daemon
 import daemon.pidfile
-import server
-import client
 import signal
 import time
 import urllib
 import urllib.parse
+
+import server
+import client
+import runstatus
 
 UMASK = ~0o775
 
@@ -81,7 +83,6 @@ def main():
 
 
 # Run flag
-run = True
 
 
 def service():
@@ -105,7 +106,7 @@ def service():
                 logging.exception("Failed to stop service \"%s\"." %
                                   (s.name()))
 
-        return ret
+        return runstatus.exit_code
 
     for c in client.get_protocols():
         logging.info("Starting client \"%s\"..." % (c.Client.name()))
@@ -163,7 +164,7 @@ def service():
     signal.signal(signal.SIGTERM, stopRunning)
     signal.signal(signal.SIGHUP, stopRunning)
 
-    while run:
+    while runstatus.run:
         time.sleep(0.5)
 
     # Stop service

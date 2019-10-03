@@ -5,7 +5,6 @@ import server
 import config
 import http
 import http.server
-import threading
 import socketserver
 import copy
 import urllib
@@ -14,6 +13,7 @@ import sys
 import os
 import io
 import logging
+import threading
 
 
 class RequestHandlerTemplate(http.server.SimpleHTTPRequestHandler):
@@ -210,16 +210,15 @@ class ThreadingHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
     daemon_threads = True
 
 
-class Server(server.Server, threading.Thread):
+class Server(server.Server):
     """Rsync protocol."""
-    def __init__(self, data_path, distros):
+    def __init__(self, *args):
         """Constructor.
 
         :param  data_path:  Path of data directory, :class:`str` object.
         :param  distros:    Distros use this protocol, :class:`list` object.
         """
-        server.Server.__init__(self, data_path, distros)
-        threading.Thread.__init__(self)
+        super().__init__(*args)
         self.__cond = threading.Condition()
 
     def default_config():
@@ -248,7 +247,7 @@ class Server(server.Server, threading.Thread):
         })
         self.__server = ThreadingHTTPServer(
             (self.__config["address"], self.__config["port"]), requestHandler)
-        threading.Thread.start(self)
+        self.start_work()
 
     def stop(self):
         """Stop service.
@@ -256,5 +255,5 @@ class Server(server.Server, threading.Thread):
         self.__server.shutdown()
         self.join()
 
-    def run(self):
+    def work(self):
         self.__server.serve_forever()
