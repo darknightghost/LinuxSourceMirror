@@ -18,7 +18,7 @@ class Server:
         :param  data_path:  Path of data directory, :class:`str` object.
         :param  distros:    Distros use this protocol, :class:`list` object.
         """
-        super().__init__(self)
+        super().__init__()
         self._data_path = data_path
         self._distros = distros
 
