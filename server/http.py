@@ -103,7 +103,7 @@ class RequestHandlerTemplate(http.server.SimpleHTTPRequestHandler):
                  'content="text/html; charset=%s">' % enc)
         r.append('<title>%s</title>\n</head>' % title)
         r.append('<body>\n<h1>%s</h1>' % title)
-        r.append('<hr>\n<table border=\"0\">\n')
+        r.append('<hr>\n<table border=\"0\" width="100%">>\n')
         r.append('<tr><th>Distro</th><th>Source</th></tr>\n')
         for name in self._distros:
             fullname = os.path.join(path, name)
@@ -161,7 +161,7 @@ class RequestHandlerTemplate(http.server.SimpleHTTPRequestHandler):
                  'content="text/html; charset=%s">' % enc)
         r.append('<title>%s</title>\n</head>' % title)
         r.append('<body>\n<h1>%s</h1>' % title)
-        r.append('<hr>\n<table border=\"0\">\n')
+        r.append('<hr>\n<table border=\"0\" width="100%">\n')
         r.append('<tr><th>Name</th><th>Size</th><th>Last Modified</th></tr>\n')
         for name in list:
             fullname = os.path.join(path, name)
@@ -183,7 +183,7 @@ class RequestHandlerTemplate(http.server.SimpleHTTPRequestHandler):
                        self.date_time_string(fs.st_mtime)))
             except FileNotFoundError:
                 r.append(
-                    '<tr><td><a href="%s">%s</a></td><td>-</td><td>-</td></tr>\n'
+                    '<tr><td><a href="%s">%s</a></td><td>UNKNOW</td><td>UNKNOW</td></tr>\n'
                     % (urllib.parse.quote(linkname, errors='surrogatepass'),
                        html.escape(displayname, quote=False)))
 
