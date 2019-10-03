@@ -4,7 +4,7 @@
 import pkgutil
 import sys
 import importlib
-import pathli
+import pathlib
 import threading
 import sys
 import runstatus
