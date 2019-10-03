@@ -174,12 +174,19 @@ class RequestHandlerTemplate(http.server.SimpleHTTPRequestHandler):
                 displayname = name + "@"
                 # Note: a link to a directory displays with @ and links with /
 
-            fs = os.stat(fullname)
-            r.append(
-                '<tr><td><a href="%s">%s</a></td><td>%d</td><td>%s</td></tr>\n'
-                % (urllib.parse.quote(linkname, errors='surrogatepass'),
-                   html.escape(displayname, quote=False), fs[6],
-                   self.date_time_string(fs.st_mtime)))
+            try:
+                fs = os.stat(fullname)
+                r.append(
+                    '<tr><td><a href="%s">%s</a></td><td>%d</td><td>%s</td></tr>\n'
+                    % (urllib.parse.quote(linkname, errors='surrogatepass'),
+                       html.escape(displayname, quote=False), fs[6],
+                       self.date_time_string(fs.st_mtime)))
+            except FileNotFoundError:
+                r.append(
+                    '<tr><td><a href="%s">%s</a></td><td>-</td><td>-</td></tr>\n'
+                    % (urllib.parse.quote(linkname, errors='surrogatepass'),
+                       html.escape(displayname, quote=False)))
+
         r.append('</table>\n<hr>\n</body>\n</html>\n')
         encoded = '\n'.join(r).encode(enc, 'surrogateescape')
         f = io.BytesIO()
