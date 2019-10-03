@@ -10,7 +10,7 @@ import sys
 import runstatus
 
 
-class Server:
+class Server(threading.Thread):
     """Base class of all server protocols."""
     def __init__(self, data_path, distros):
         """Constructor.

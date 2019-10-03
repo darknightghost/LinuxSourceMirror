@@ -10,7 +10,7 @@ import sys
 import runstatus
 
 
-class Client:
+class Client(threading.Thread):
     """Base class of all client protocols."""
     def __init__(self, data_path, distros):
         """Constructor.
