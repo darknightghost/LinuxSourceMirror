@@ -59,7 +59,7 @@ class Client:
     def start_work(self):
         """Start service.
         """
-        threading.Thread.start()
+        threading.Thread.start(self)
 
     def run(self):
         """Run service.
