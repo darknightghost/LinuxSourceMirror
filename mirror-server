@@ -154,7 +154,7 @@ def service():
     # Wait
     def stopRunning(signum, s):
         logging.info("Signal %s caught." % (signal.Signals(signum).name))
-        runstatus.exit_code(0)
+        runstatus.exit(0)
 
     signal.signal(signal.SIGINT, stopRunning)
     signal.signal(signal.SIGTERM, stopRunning)
