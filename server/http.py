@@ -113,10 +113,12 @@ class RequestHandlerTemplate(http.server.SimpleHTTPRequestHandler):
                 displayname = name + "/"
                 linkname = name + "/"
 
-            r.append('<tr><td><a href="%s">%s</a></td><td>%s</td></tr>\n' %
-                     (urllib.parse.quote(linkname, errors='surrogatepass'),
-                      html.escape(displayname, quote=False),
-                      config.config.distro_url(name)))
+            r.append(
+                '<tr><td><a href="%s">%s</a></td><td><a href="%s">%s</a></td></tr>\n'
+                % (urllib.parse.quote(linkname, errors='surrogatepass'),
+                   html.escape(displayname,
+                               quote=False), config.config.distro_url(name),
+                   config.config.distro_url(name)))
 
         r.append('</table>\n<hr>\n</body>\n</html>\n')
         encoded = '\n'.join(r).encode(enc, 'surrogateescape')
@@ -140,8 +142,7 @@ class RequestHandlerTemplate(http.server.SimpleHTTPRequestHandler):
         try:
             list = os.listdir(path)
         except OSError:
-            self.send_error(HTTPStatus.NOT_FOUND,
-                            "No permission to list directory")
+            self.send_error(404, "No permission to list directory")
             return None
         list.sort(key=lambda a: a.lower())
         r = []
@@ -184,7 +185,7 @@ class RequestHandlerTemplate(http.server.SimpleHTTPRequestHandler):
         f = io.BytesIO()
         f.write(encoded)
         f.seek(0)
-        self.send_response(HTTPStatus.OK)
+        self.send_response(200)
         self.send_header("Content-type", "text/html; charset=%s" % enc)
         self.send_header("Content-Length", str(len(encoded)))
         self.end_headers()
