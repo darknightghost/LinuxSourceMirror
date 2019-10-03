@@ -135,4 +135,4 @@ class Client(client.Client, threading.Thread):
         :return:    Command.
         :rtype:     :class:`str`
         """
-        return [self.__config["exec"], "-rtlvH", "--delete-after", "--delay-updates", "--safe-links", url, path]
+        return [self.__config["exec"], "-rtlvH", "--delete-after", "--partial", "--delay-updates", "--safe-links", url, path]
