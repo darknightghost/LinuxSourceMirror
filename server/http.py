@@ -135,7 +135,7 @@ class RequestHandlerTemplate(http.server.SimpleHTTPRequestHandler):
                         self.wfile.write(data)
 
             except Exception as e:
-                logging.warning(sys.exc_info())
+                logging.warning(sys.exc_info(), exc_info=True)
 
             finally:
                 f.close()
