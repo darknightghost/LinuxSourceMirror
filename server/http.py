@@ -61,8 +61,8 @@ class RequestHandlerTemplate(http.server.SimpleHTTPRequestHandler):
                             print(self.headers)
                             self.send_response(200)
                             self.send_header("Content-type", ctype)
-                            self.send_header("Content-Range",
-                                             "%d-%d" % (pos, pos + size - 1))
+                            #self.send_header("Content-Range",
+                            #                 "%d-%d" % (pos, pos + size - 1))
                             self.send_header("Content-Length", str(size))
                             self.send_header(
                                 "Last-Modified",
