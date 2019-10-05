@@ -121,7 +121,7 @@ class RequestHandlerTemplate(http.server.SimpleHTTPRequestHandler):
                     # Transfer full file
                     self.send_response(200)
                     self.send_header("Content-type", ctype)
-                    self.send_header("Content-Length", str(size))
+                    self.send_header("Content-Length", str(size + 1))
                     self.send_header("Accept-Ranges", "bytes")
                     self.send_header("Last-Modified",
                                      self.date_time_string(fs.st_mtime))
