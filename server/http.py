@@ -31,6 +31,8 @@ class RequestHandlerTemplate(http.server.SimpleHTTPRequestHandler):
         path = self.path.strip().strip('/').split('/')
 
         f = None
+        pos = 0
+        size = -1
         if len(path) == 1:
             if path[0] == "":
                 f = self.list_root()
@@ -59,6 +61,7 @@ class RequestHandlerTemplate(http.server.SimpleHTTPRequestHandler):
                             pos = 0
                             size = fs[6]
                             print(self.headers)
+                            print(type(self.headers))
                             self.send_response(200)
                             self.send_header("Content-type", ctype)
                             #self.send_header("Content-Range",
@@ -80,8 +83,16 @@ class RequestHandlerTemplate(http.server.SimpleHTTPRequestHandler):
             self.send_error(404, "File not found")
 
         else:
-            self.copyfile(f, self.wfile)
+            self.copyfile(f, self.wfile, pos = pos,. size = size)
             f.close()
+
+    def copyfile(self, source, outputfile, pos=0, size=-1):
+        """copy data from file-like object fsrc to file-like object fdst"""
+        while 1:
+            buf = fsrc.read(length)
+            if not buf:
+                break
+            fdst.write(buf)
 
     def list_root(self):
         """Helper to produce a root directory listing (absent index.html).
