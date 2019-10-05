@@ -195,8 +195,7 @@ class RequestHandlerTemplate(http.server.SimpleHTTPRequestHandler):
             range_headers.append(data)
             content_length += len(data) + r[1] - r[0] + 1 + 2
 
-        end_boundary = ("--%s--\r\n" %
-                        (self.BOUNDARY)).encode(encoding="utf-8")
+        end_boundary = ("--%s--" % (self.BOUNDARY)).encode(encoding="utf-8")
         content_length += len(end_boundary)
 
         # Fill header
