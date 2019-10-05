@@ -80,6 +80,8 @@ class RequestHandlerTemplate(http.server.SimpleHTTPRequestHandler):
                 if range_str:
                     # Partial Content
                     ranges = self.parse_range(range_str, size)
+                    print(range_str)
+                    print(ranges)
 
                     if ranges == None or len(ranges) == 0:
                         self.send_error(406, "Not Acceptable")
@@ -126,7 +128,8 @@ class RequestHandlerTemplate(http.server.SimpleHTTPRequestHandler):
                     self.end_headers()
                     self.copyfile(f, self.wfile)
 
-            except:
+            except Exception as e:
+                logging.exception(sys.exc_info())
                 self.send_error(400, "Bad Request")
 
             finally:
