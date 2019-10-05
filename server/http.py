@@ -141,7 +141,7 @@ class RequestHandlerTemplate(http.server.SimpleHTTPRequestHandler):
     def parse_range(self, range_str, size):
         """Parse ranges"""
         ret = []
-        for s in srange_str.replace("bytes=", "").split(","):
+        for s in range_str.replace("bytes=", "").split(","):
             s = s.strip()
             for c in s:
                 if not c.isdigit() and c != '-':
