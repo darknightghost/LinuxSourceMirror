@@ -83,7 +83,7 @@ class RequestHandlerTemplate(http.server.SimpleHTTPRequestHandler):
             self.send_error(404, "File not found")
 
         else:
-            self.copyfile(f, self.wfile, pos = pos,. size = size)
+            self.copyfile(f, self.wfile, pos=pos, size=size)
             f.close()
 
     def copyfile(self, source, outputfile, pos=0, size=-1):
