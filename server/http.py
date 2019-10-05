@@ -19,6 +19,7 @@ import threading
 class RequestHandlerTemplate(http.server.SimpleHTTPRequestHandler):
     DATA_DIRECTORY = None
     DISTROS = None
+    BOUNDARY = "LINUX_MIRROR_SERVER_DATA_BOUNDARY"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=self.DATA_DIRECTORY, **kwargs)
@@ -39,6 +40,8 @@ class RequestHandlerTemplate(http.server.SimpleHTTPRequestHandler):
 
             elif path[0] == "favicon.ico":
                 self.send_response(200)
+                self.send_header("Content-Length", "0")
+                self.send_header("Accept-Ranges", "bytes")
                 self.end_headers()
                 return
 
@@ -53,45 +56,172 @@ class RequestHandlerTemplate(http.server.SimpleHTTPRequestHandler):
                     f = self.list_directory(path)
 
                 else:
-                    ctype = self.guess_type(path)
-                    try:
-                        f = open(path, 'rb')
-                        try:
-                            fs = os.fstat(f.fileno())
-                            pos = 0
-                            size = fs[6]
-                            print(self.headers.get("Range"))
-                            self.send_response(200)
-                            self.send_header("Content-type", ctype)
-                            #self.send_header("Content-Range",
-                            #                 "%d-%d" % (pos, pos + size - 1))
-                            self.send_header("Content-Length", str(size))
-                            self.send_header(
-                                "Last-Modified",
-                                self.date_time_string(fs.st_mtime))
-                            self.end_headers()
-
-                        except:
-                            f.close()
-                            f = None
-
-                    except OSError:
-                        f = None
+                    self.transfer_file(path)
+                    return
 
         if f == None:
             self.send_error(404, "File not found")
 
         else:
-            self.copyfile(f, self.wfile, pos=pos, size=size)
+            self.copyfile(f, self.wfile)
             f.close()
 
-    def copyfile(self, source, outputfile, pos=0, size=-1):
-        """copy data from file-like object fsrc to file-like object fdst"""
-        while 1:
-            buf = fsrc.read(length)
-            if not buf:
-                break
-            fdst.write(buf)
+    def transfer_file(path):
+        """Transfer file"""
+        ctype = self.guess_type(path)
+        try:
+            # Open file
+            f = open(path, 'rb')
+            try:
+                fs = os.fstat(f.fileno())
+                size = fs[6]
+                range_str = self.headers.get("Range")
+
+                if range_str:
+                    # Partial Content
+                    ranges = self.parse_range(range_str, size)
+
+                    if ranges == None or len(ranges) == 0:
+                        self.send_error(406, "Not Acceptable")
+                        return
+
+                    self.send_response(206)
+                    self.send_header("Last-Modified",
+                                     self.date_time_string(fs.st_mtime))
+                    if len(ranges) == 1:
+                        # One range
+                        size_to_read = ranges[0][1] - ranges[0][0] + 1
+                        self.send_header("Content-type", ctype)
+                        self.send_header("Content-Length", str(size_to_read))
+                        self.send_header("Accept-Ranges", "bytes")
+                        self.send_header(
+                            "Content-Range", "bytes %d-%d/%d" %
+                            (ranges[0][0], ranges[0][1], size))
+                        self.end_headers()
+                        f.seek(ranges[0][0], 0)
+
+                        # Send file
+                        while size_to_read > 0:
+                            data = f.read(size_to_read)
+                            if not data:
+                                self.send_error(406, "Not Acceptable")
+                                return
+
+                            size_to_read -= len(data)
+                            self.wfile.write(data)
+
+                    else:
+                        # Multiple ranges
+                        self.send_mutiple_ranges(ctype, size, ranges, f)
+                        return
+
+                else:
+                    # Transfer full file
+                    self.send_response(200)
+                    self.send_header("Content-type", ctype)
+                    self.send_header("Content-Length", str(size))
+                    self.send_header("Accept-Ranges", "bytes")
+                    self.send_header("Last-Modified",
+                                     self.date_time_string(fs.st_mtime))
+                    self.end_headers()
+                    self.copyfile(f, self.wfile)
+
+            except:
+                self.send_error(400, "Bad Request")
+
+            finally:
+                f.close()
+
+        except OSError:
+            self.send_error(404, "File not found")
+
+    def parse_range(self, range_str, size):
+        """Parse ranges"""
+        ret = []
+        for s in srange_str.replace("bytes=", "").split(","):
+            s = s.strip()
+            for c in s:
+                if not c.isdigit() and c != '-':
+                    return None
+
+            splited = s.split("-")
+            if len(splited) == 2:
+                if splited[0] != "":
+                    if splited[1] != "":
+                        # Range: bytes=0-499
+                        begin = int(splited[0])
+                        end = int(splited[1])
+
+                    else:
+                        # Range: bytes=500-
+                        begin = int(splited[0])
+                        end = size - 1
+
+                elif splited[1] != "":
+                    # Range: bytes=-500
+                    begin = size - int(splited[1])
+                    end = size - 1
+
+                else:
+                    return None
+
+            if begin > end:
+                return None
+
+            elif begin < 0:
+                return None
+
+            elif end >= size:
+                return None
+
+            ret.append((begin, end))
+
+        return ret
+
+    def send_mutiple_ranges(self, ctype, size, ranges, f):
+        """ Send ranges"""
+        # Header of ranges and compute content length
+        range_headers = []
+        content_length = 0
+        for r in ranges:
+            data = ("--%s\r\n" \
+                    "Content-Type: %s\r\n" \
+                    "Content-Range: bytes %d-%d/%d\r\n" \
+                    "\r\n" % (self.BOUNDARY, ctype, r[0], r[1], size)).encode(
+                            encoding="utf-8")
+            range_headers.append(data)
+            content_length += len(data) + r[1] - r[0] + 1 + 2
+
+        end_boundary = ("--%s--\r\n" %
+                        (self.BOUNDARY)).encode(encoding="utf-8")
+        content_length += len(end_boundary)
+
+        # Fill header
+        self.send_header("Content-type",
+                         "multipart/byteranges; boundary=%s" % (self.BOUNDARY))
+        self.send_header("Content-Length", str(content_length))
+        self.send_header("Accept-Ranges", "bytes")
+        self.end_headers()
+
+        # Send data
+        for i in range(0, len(ranges)):
+            self.wfile.write(range_headers[i])
+
+            # Send file
+            f.seek(ranges[i][0], 0)
+            size_to_read = ranges[i][1] - ranges[i][0] + 1
+            while size_to_read > 0:
+                data = f.read(size_to_read)
+                if not data:
+                    self.send_error(406, "Not Acceptable")
+                    return
+
+                size_to_read -= len(data)
+                self.wfile.write(data)
+
+            self.wfile.write(b'\r\n\r\n')
+
+        wfile.write(end_boundary)
 
     def list_root(self):
         """Helper to produce a root directory listing (absent index.html).
