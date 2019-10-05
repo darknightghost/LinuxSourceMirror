@@ -66,7 +66,7 @@ class RequestHandlerTemplate(http.server.SimpleHTTPRequestHandler):
             self.copyfile(f, self.wfile)
             f.close()
 
-    def transfer_file(path):
+    def transfer_file(self, path):
         """Transfer file"""
         ctype = self.guess_type(path)
         try:
