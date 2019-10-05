@@ -134,7 +134,6 @@ class RequestHandlerTemplate(http.server.SimpleHTTPRequestHandler):
 
             except Exception as e:
                 logging.exception(sys.exc_info())
-                self.send_error(400, "Bad Request")
 
             finally:
                 f.close()
