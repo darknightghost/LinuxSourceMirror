@@ -110,6 +110,8 @@ class RequestHandlerTemplate(http.server.SimpleHTTPRequestHandler):
                             size_to_read -= len(data)
                             self.wfile.write(data)
 
+                        return
+
                     else:
                         # Multiple ranges
                         self.send_mutiple_ranges(ctype, size, ranges, f)
