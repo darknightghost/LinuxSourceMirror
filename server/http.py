@@ -58,7 +58,7 @@ class RequestHandlerTemplate(http.server.SimpleHTTPRequestHandler):
                             fs = os.fstat(f.fileno())
                             pos = 0
                             size = fs[6]
-                            print(self.requestline)
+                            print(self.headers)
                             self.send_response(200)
                             self.send_header("Content-type", ctype)
                             self.send_header("Content-Range",
