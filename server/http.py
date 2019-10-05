@@ -80,8 +80,6 @@ class RequestHandlerTemplate(http.server.SimpleHTTPRequestHandler):
                 if range_str:
                     # Partial Content
                     ranges = self.parse_range(range_str, size)
-                    print(range_str)
-                    print(ranges)
 
                     if ranges == None or len(ranges) == 0:
                         self.send_error(406, "Not Acceptable")
@@ -126,7 +124,13 @@ class RequestHandlerTemplate(http.server.SimpleHTTPRequestHandler):
                     self.send_header("Last-Modified",
                                      self.date_time_string(fs.st_mtime))
                     self.end_headers()
-                    self.copyfile(f, self.wfile)
+
+                    while True:
+                        data = f.read(64 * 1024 * 1024)
+                        if not data:
+                            break
+
+                        self.wfile.write(data)
 
             except Exception as e:
                 logging.exception(sys.exc_info())
@@ -195,7 +199,8 @@ class RequestHandlerTemplate(http.server.SimpleHTTPRequestHandler):
             range_headers.append(data)
             content_length += len(data) + r[1] - r[0] + 1 + 2
 
-        end_boundary = ("--%s--" % (self.BOUNDARY)).encode(encoding="utf-8")
+        end_boundary = ("--%s--\r\n" %
+                        (self.BOUNDARY)).encode(encoding="utf-8")
         content_length += len(end_boundary)
 
         # Fill header
