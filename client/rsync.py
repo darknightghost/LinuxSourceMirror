@@ -84,8 +84,8 @@ class Client(client.Client):
         """
         self.__tasks = {}
         self.__seconds = {}
-        selt.__contimeout = self.__config["connnect-timeout"]
-        selt.__timeout = self.__config["timeout"]
+        self.__contimeout = self.__config["connnect-timeout"]
+        self.__timeout = self.__config["timeout"]
 
         for distro in self._distros:
             self.__seconds[distro] = self.__config["interval"]

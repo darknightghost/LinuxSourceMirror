@@ -8,6 +8,7 @@ import pathlib
 import threading
 import sys
 import runstatus
+import logging
 
 
 class Server(threading.Thread):
