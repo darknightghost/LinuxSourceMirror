@@ -54,7 +54,7 @@ class Client(client.Client):
             "exec": "rsync",
             "interval": 3600,
             "max_connection": 10,
-            "connnect-timeout": 30,
+            "connect-timeout": 30,
             "timeout": 30
         }
 
@@ -84,7 +84,7 @@ class Client(client.Client):
         """
         self.__tasks = {}
         self.__seconds = {}
-        self.__contimeout = self.__config["connnect-timeout"]
+        self.__contimeout = self.__config["connect-timeout"]
         self.__timeout = self.__config["timeout"]
 
         for distro in self._distros:
