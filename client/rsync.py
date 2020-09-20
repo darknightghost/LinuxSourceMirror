@@ -50,7 +50,13 @@ class Client(client.Client):
         :return:    Config.
         :rtype:     :class:`dict`
         """
-        return {"exec": "rsync", "interval": 3600, "max_connection": 10}
+        return {
+            "exec": "rsync",
+            "interval": 3600,
+            "max_connection": 10,
+            "connnect-timeout": 30,
+            "timeout": 30
+        }
 
     def name(self=None):
         """Get protocol name.
@@ -78,6 +84,9 @@ class Client(client.Client):
         """
         self.__tasks = {}
         self.__seconds = {}
+        selt.__contimeout = self.config["connnect-timeout"]
+        selt.__timeout = self.config["timeout"]
+
         for distro in self._distros:
             self.__seconds[distro] = self.__config["interval"]
 
@@ -167,6 +176,8 @@ class Client(client.Client):
         :rtype:     :class:`str`
         """
         return [
-            self.__config["exec"], "-rtlvH", "--delete-after", "--partial",
-            "--delay-updates", "--safe-links", url, path
+            self.__config["exec"], "-rtlvH", "--delete-after",
+            "--contimeout=%d" % (self.__contimeout),
+            "--timeout=%d" % (self.__timeout), "--partial", "--delay-updates",
+            "--safe-links", url, path
         ]
