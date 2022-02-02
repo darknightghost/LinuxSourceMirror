@@ -15,6 +15,7 @@ mod logger;
     name = "LinuxSourceMirror",
     about = "Service to create a linux source mirror."
 )]
+/// Arguments.
 struct Arguments {
     /// Config file
     #[structopt(
@@ -31,6 +32,7 @@ struct Arguments {
 
 /// Entery of the application.
 fn run_service() -> i32 {
+    // Parse arguments.
     let args = Arguments::from_args();
     println!("List of arguments:");
     println!("    {:16} : \"{}\".", "Run as Dameon", args.daemon);
@@ -40,6 +42,7 @@ fn run_service() -> i32 {
         args.config_file.to_str().unwrap()
     );
 
+    // Load config.
     println!("\nLoading config...");
     config::load_config(args.config_file.clone());
 
