@@ -14,3 +14,4 @@ test/*
 .directory
 !.gitkeep
 Cargo.lock
+target/*
