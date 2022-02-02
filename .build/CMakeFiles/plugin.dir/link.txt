@@ -1,2 +1,0 @@
-/usr/bin/ar qc ../lib/Debug/Linux/x86_64/libplugin.a CMakeFiles/plugin.dir/source/plugin/client_plugin.cc.o CMakeFiles/plugin.dir/source/plugin/server_plugin.cc.o
-/usr/bin/ranlib ../lib/Debug/Linux/x86_64/libplugin.a

@@ -1,2 +1,0 @@
-/usr/bin/ar qc ../lib/Debug/Linux/x86_64/libconfig.a CMakeFiles/config.dir/source/config/config.cc.o
-/usr/bin/ranlib ../lib/Debug/Linux/x86_64/libconfig.a

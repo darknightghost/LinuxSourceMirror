@@ -13,3 +13,4 @@ main.spec
 test/*
 .directory
 !.gitkeep
+Cargo.lock

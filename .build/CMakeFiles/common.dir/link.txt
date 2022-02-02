@@ -1,2 +1,0 @@
-/usr/bin/ar qc ../lib/Debug/Linux/x86_64/libcommon.a CMakeFiles/common.dir/source/common/err.cc.o CMakeFiles/common.dir/source/common/path.cc.o
-/usr/bin/ranlib ../lib/Debug/Linux/x86_64/libcommon.a

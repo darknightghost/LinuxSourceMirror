@@ -1,7 +1,0 @@
-/home/darknightghost/projects/LinuxSourceMirror/.build/CMakeFiles/rebuild_cache.dir
-/home/darknightghost/projects/LinuxSourceMirror/.build/CMakeFiles/edit_cache.dir
-/home/darknightghost/projects/LinuxSourceMirror/.build/CMakeFiles/LinuxSourceMirror.dir
-/home/darknightghost/projects/LinuxSourceMirror/.build/CMakeFiles/plugin.dir
-/home/darknightghost/projects/LinuxSourceMirror/.build/CMakeFiles/logger.dir
-/home/darknightghost/projects/LinuxSourceMirror/.build/CMakeFiles/config.dir
-/home/darknightghost/projects/LinuxSourceMirror/.build/CMakeFiles/common.dir
