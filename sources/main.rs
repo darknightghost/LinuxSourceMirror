@@ -5,10 +5,11 @@ extern crate log;
 #[macro_use]
 extern crate structopt;
 
-use structopt::StructOpt;
-
+#[macro_use]
+extern crate config_macros;
 mod config;
-mod logger;
+
+use structopt::StructOpt;
 
 #[derive(Debug, structopt::StructOpt)]
 #[structopt(
@@ -23,11 +24,11 @@ struct Arguments {
         long = "config",
         default_value = "/etc/mirror-server-conf.json"
     )]
-    config_file: ::std::path::PathBuf,
+    pub config_file: ::std::path::PathBuf,
 
     /// Run as daemon.
     #[structopt(short = "d", long = "daemon")]
-    daemon: bool,
+    pub daemon: bool,
 }
 
 /// Entery of the application.

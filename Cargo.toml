@@ -10,3 +10,17 @@ structopt = "0.2"
 log = "0.4"
 daemonize = "0.4"
 json = "0.12"
+syn = "1.0"
+quote = "1.0"
+proc-macro2 = "1.0.36"
+regex = "1.5"
+lazy_static = "0.2"
+
+[lib]
+name = "config_macros"
+path = "sources/config/config_macros.rs"
+proc-macro = true
+
+[[bin]]
+name = "linux-source-mirror"
+path = "sources/main.rs"
