@@ -175,6 +175,57 @@ fn parse_attr_args(input: ::proc_macro::TokenStream) -> Vec<AttributeArgument> {
     return ret;
 }
 
+/// Config field infomation.
+struct ConfigFieldInfo {
+    /// Field name.
+    field_name: ::proc_macro2::Ident,
+
+    /// Key.
+    key: String,
+}
+
+impl ConfigFieldInfo {
+    fn new(args: Vec<AttributeArgument>, field_name: proc_macro2::Ident) -> ConfigFieldInfo {
+        let mut key: Option<String> = Option::None;
+
+        // Parse arguments.
+        for arg in args.iter() {
+            match arg.key {
+                Option::Some(ref key_name) => match key_name.as_str() {
+                    "key" => {
+                        key = Option::Some(
+                            arg.value
+                                .as_ref()
+                                .downcast_ref::<String>()
+                                .unwrap()
+                                .to_string(),
+                        );
+                    }
+                    _ => {
+                        panic!(
+                            "Illegal keyword argument \"{}\" of attribute \"config_field\"!",
+                            key_name
+                        );
+                    }
+                },
+                _ => {
+                    panic!("Illegal position argument of attribute \"config_field\"!");
+                }
+            }
+        }
+
+        // Check.
+        if let Option::None = key {
+            panic!("Missing keyword argument \"key\" of attribute \"config_field\"!");
+        }
+
+        return ConfigFieldInfo {
+            field_name: field_name,
+            key: key.unwrap(),
+        };
+    }
+}
+
 #[proc_macro_attribute]
 pub fn config_struct(
     _meta: ::proc_macro::TokenStream,
@@ -187,6 +238,7 @@ pub fn config_struct(
     let mut ast: ::syn::DeriveInput = ::syn::parse(_input).unwrap();
 
     // Scan fields.
+    let mut fields_info: Vec<ConfigFieldInfo> = Vec::new();
     if let ::syn::Data::Struct(ref mut data) = ast.data {
         if let ::syn::Fields::Named(ref _fields) = data.fields {
             for ref mut field in data.fields.iter_mut() {
@@ -195,15 +247,19 @@ pub fn config_struct(
                 for attr in field.attrs.iter() {
                     if let Option::Some(ref attr_name) = attr.path.get_ident() {
                         if attr_name.to_string() == "config_field" {
-                            println!("---------------------------");
+                            // Parse attributes.
                             let args = parse_attr_args(attr.tokens.clone().into());
-                            for a in args.iter() {
-                                println!("{}", a);
+                            if let Option::Some(ref ident) = field.ident {
+                                let field_name = ident.clone();
+                                fields_info.push(ConfigFieldInfo::new(args, field_name));
+                            } else {
+                                panic!("Only structs with named fields can have attribute `config_struct`.");
                             }
-                            println!("---------------------------");
                         } else {
                             new_attrs.push(attr.clone());
                         }
+                    } else {
+                        panic!("Missing argument(s) of attribute \"config_field\"!");
                     }
                 }
                 field.attrs = new_attrs;
@@ -215,13 +271,45 @@ pub fn config_struct(
         panic!("Only structs with named fields can have attribute `config_struct`.");
     }
 
+    // Generate load code.
+    let mut load_code = ::quote::quote! {};
+    for info in fields_info.iter() {
+        let field = info.field_name.clone();
+        let key = info.key.clone();
+
+        load_code = ::quote::quote! {
+            #load_code
+
+            ret = load_json_config(&mut self.#field, value, &#key.to_string());
+            if let Result::Err(ref s) = ret {
+                return ret;
+            }
+        };
+    }
+
     // Parse output.
     let struct_name = ast.ident.clone();
     let output = quote::quote! {
         #meta
         #ast
 
-        impl ConfigStruct for #struct_name {
+
+        impl ConfigType for #struct_name {
+            /// Load json value.
+            ///
+            /// # Arguments
+            ///
+            /// * `self`    - Self.
+            /// * `value`   - Json value.
+            fn load_json_value(
+                &mut self,
+                value: &::json::JsonValue) -> Result<common::Unused, String> {
+                let mut ret = Result::Ok(common::Unused{});
+
+                #load_code
+
+                return ret;
+            }
         }
     }
     .into();
@@ -231,15 +319,4 @@ pub fn config_struct(
     println!("{:-^40}{:-^40}", "config_struct", struct_name.to_string());
 
     return output;
-}
-
-#[proc_macro_attribute]
-pub fn config_value_map(
-    _meta: ::proc_macro::TokenStream,
-    _input: ::proc_macro::TokenStream,
-) -> ::proc_macro::TokenStream {
-    println!("\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\");
-    //let ast: ::syn::DeriveInput = syn::parse(_input).unwrap();
-    println!("////////////////////////////////////////");
-    return _input;
 }

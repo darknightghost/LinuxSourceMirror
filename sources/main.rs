@@ -7,7 +7,10 @@ extern crate structopt;
 
 #[macro_use]
 extern crate config_macros;
+
+mod common;
 mod config;
+mod logger;
 
 use structopt::StructOpt;
 
