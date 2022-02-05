@@ -1,6 +1,7 @@
 //! Configs.
 
 use crate::common;
+use std::io::Read;
 
 /// Config trait.
 pub trait ConfigType {
@@ -25,6 +26,16 @@ fn find_node_by_path<'root_lifetime>(
 ) -> Result<&'root_lifetime ::json::JsonValue, String> {
     let mut ret = root;
     let mut scaned_keys: String = String::new();
+
+    // Skip root.
+    if key.len() == 0 {
+        return Result::Ok(ret);
+    }
+    //TODO
+    println!("-----------------{}------------", key);
+    for name in key.split('/') {
+        println!("{}", name);
+    }
 
     // Search value.
     for name in key.split('/') {
@@ -69,10 +80,14 @@ fn load_json_config<T: ConfigType>(
     key: &String,
 ) -> Result<common::Unused, String> {
     match find_node_by_path(root, key) {
-        Result::Ok(value) => {
-            output.load_json_value(value);
-            return Result::Ok(common::Unused {});
-        }
+        Result::Ok(value) => match output.load_json_value(value) {
+            Result::Ok(_) => {
+                return Result::Ok(common::Unused {});
+            }
+            Result::Err(err_string) => {
+                return Result::Err(err_string);
+            }
+        },
         Result::Err(err_string) => {
             return Result::Err(err_string);
         }
@@ -256,6 +271,35 @@ impl ConfigType for ::std::path::PathBuf {
     }
 }
 
+// ::log::Level.
+impl ConfigType for ::log::Level {
+    /// Load json value.
+    ///
+    /// # Arguments
+    ///
+    /// * `self`    - Self.
+    /// * `value`   - Json value.
+    fn load_json_value(&mut self, value: &::json::JsonValue) -> Result<common::Unused, String> {
+        if let ::json::JsonValue::String(ref value_string) = value {
+            *self = match value_string.as_str() {
+                "Trace" => ::log::Level::Trace,
+                "Debug" => ::log::Level::Debug,
+                "Info" => ::log::Level::Info,
+                "Warn" => ::log::Level::Warn,
+                "Error" => ::log::Level::Error,
+                _ => {
+                    return Result::Err(
+                        ::std::format!("Illegale log level \"{}\".", value_string).to_string(),
+                    );
+                }
+            };
+            return Result::Ok(common::Unused {});
+        } else {
+            return Result::Err("The value is not a string.".to_string());
+        }
+    }
+}
+
 #[config_struct]
 /// Log config.
 pub struct LogConfig {
@@ -263,7 +307,7 @@ pub struct LogConfig {
     /// Path of log file.
     log_path: ::std::path::PathBuf,
 
-    //#[config_field(key = "log_level")]
+    #[config_field(key = "log_level")]
     /// Log level.
     log_level: ::log::Level,
 
@@ -272,14 +316,121 @@ pub struct LogConfig {
     max_log_days: i32,
 }
 
+impl LogConfig {
+    /// Create new config object.
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - Path of the config file
+    pub fn new() -> Self {
+        return LogConfig {
+            log_path: ::std::path::PathBuf::new(),
+            log_level: ::log::Level::Info,
+            max_log_days: -1,
+        };
+    }
+}
+
+/// User to run as.
+pub enum User {
+    /// Username.
+    Username(String),
+
+    /// User ID.
+    Uid(::nix::unistd::Uid),
+}
+
+// User.
+impl ConfigType for User {
+    /// Load json value.
+    ///
+    /// # Arguments
+    ///
+    /// * `self`    - Self.
+    /// * `value`   - Json value.
+    fn load_json_value(&mut self, value: &::json::JsonValue) -> Result<common::Unused, String> {
+        *self = match value {
+            ::json::JsonValue::String(ref value_string) => User::Username(value_string.to_string()),
+            ::json::JsonValue::Number(ref value_num) => User::Uid(::nix::unistd::Uid::from_raw(
+                value_num.as_fixed_point_u64(0).unwrap() as u32,
+            )),
+            _ => {
+                return Result::Err("The value is not a username or UID.".to_string());
+            }
+        };
+
+        return Result::Ok(common::Unused {});
+    }
+}
+
+/// Group to run as.
+pub enum Group {
+    /// Group name.
+    GroupName(String),
+
+    /// Group ID.
+    Gid(::nix::unistd::Gid),
+}
+
+// Group.
+impl ConfigType for Group {
+    /// Load json value.
+    ///
+    /// # Arguments
+    ///
+    /// * `self`    - Self.
+    /// * `value`   - Json value.
+    fn load_json_value(&mut self, value: &::json::JsonValue) -> Result<common::Unused, String> {
+        *self = match value {
+            ::json::JsonValue::String(ref value_string) => {
+                Group::GroupName(value_string.to_string())
+            }
+            ::json::JsonValue::Number(ref value_num) => Group::Gid(::nix::unistd::Gid::from_raw(
+                value_num.as_fixed_point_u64(0).unwrap() as u32,
+            )),
+            _ => {
+                return Result::Err("The value is not a username or UID.".to_string());
+            }
+        };
+
+        return Result::Ok(common::Unused {});
+    }
+}
+
 #[config_struct]
 /// Service config.
 pub struct ServiceConfig {
-    // User.
-//user: u32,
+    #[config_field(key = "user")]
+    /// User to run as.
+    user: User,
 
-// Group.
-//group: u32,
+    #[config_field(key = "group")]
+    /// Group to run as.
+    group: Group,
+
+    #[config_field(key = "pid_file")]
+    /// Path of pid file.
+    pid_file: ::std::path::PathBuf,
+
+    #[config_field(key = "data_path")]
+    /// Path of data directory.
+    data_path: ::std::path::PathBuf,
+}
+
+impl ServiceConfig {
+    /// Create new config object.
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - Path of the config file
+    pub fn new() -> Self {
+        return ServiceConfig {
+            user: User::Uid(::nix::unistd::Uid::from_raw(0)),
+            group: Group::Gid(::nix::unistd::Gid::from_raw(0)),
+            pid_file: ::std::path::PathBuf::new(),
+            data_path: ::std::path::PathBuf::new(),
+        };
+    }
 }
 
 #[config_struct]
@@ -287,15 +438,14 @@ pub struct ServiceConfig {
 pub struct Config {
     /// Path of config file.
     config_path: ::std::path::PathBuf,
-    /*
-        #[config_field(key = "/")]
-        /// Service config.
-        service_config: ServiceConfig,
 
-        #[config_field(key = "/")]
-        /// Log config.
-        log_config: LogConfig,
-    */
+    #[config_field(key = "")]
+    /// Service config.
+    service_config: ServiceConfig,
+
+    #[config_field(key = "")]
+    /// Log config.
+    log_config: LogConfig,
 }
 
 impl Config {
@@ -305,7 +455,11 @@ impl Config {
     ///
     /// * `path` - Path of the config file
     pub fn new(path: ::std::path::PathBuf) -> Self {
-        return Config { config_path: path };
+        return Config {
+            config_path: path,
+            service_config: ServiceConfig::new(),
+            log_config: LogConfig::new(),
+        };
     }
 }
 
@@ -317,10 +471,43 @@ static mut CONFIG: Option<Config> = Option::None;
 /// # Arguments
 ///
 /// * `path` - Path of the config file
-pub fn load_config(path: ::std::path::PathBuf) {
-    unsafe {
-        CONFIG = Some(Config::new(path));
+pub fn load_config(path: ::std::path::PathBuf) -> Result<common::Unused, String> {
+    // Read config file.
+    let mut file: ::std::fs::File = match ::std::fs::File::open(path.clone()) {
+        Result::Ok(file) => file,
+        Result::Err(error) => {
+            return Result::Err(error.to_string());
+        }
+    };
+
+    let mut config_str = String::new();
+
+    match file.read_to_string(&mut config_str) {
+        Result::Err(error) => {
+            return Result::Err(error.to_string());
+        }
+        _ => {}
+    };
+    let config_str = config_str;
+
+    // Parse json.
+    let parsed_json = match ::json::parse(config_str.as_str()) {
+        Result::Ok(parsed_json) => parsed_json,
+        Result::Err(error) => {
+            return Result::Err(::std::format!("{}", error).to_string());
+        }
+    };
+
+    // Load config.
+    let mut config = Config::new(path);
+    if let Result::Err(error) = load_json_config(&mut config, &parsed_json, &("".to_string())) {
+        return Result::Err(error);
     }
+    unsafe {
+        CONFIG = Some(config);
+    }
+
+    return Result::Ok(common::Unused {});
 }
 
 /// Get config.

@@ -15,6 +15,7 @@ quote = "1.0"
 proc-macro2 = "1.0.36"
 regex = "1.5"
 lazy_static = "0.2"
+nix = "0.23"
 
 [lib]
 name = "config_macros"

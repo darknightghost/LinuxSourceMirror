@@ -2,7 +2,7 @@ extern crate daemonize;
 extern crate json;
 #[macro_use]
 extern crate log;
-#[macro_use]
+extern crate nix;
 extern crate structopt;
 
 #[macro_use]
@@ -48,7 +48,9 @@ fn run_service() -> i32 {
 
     // Load config.
     println!("\nLoading config...");
-    config::load_config(args.config_file.clone());
+    if let Result::Err(err_str) = config::load_config(args.config_file.clone()) {
+        panic!("Failed to load config file : {}", err_str);
+    }
 
     return 0;
 }

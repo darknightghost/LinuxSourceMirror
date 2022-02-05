@@ -89,13 +89,16 @@ fn split_arguments(input: &String) -> Vec<String> {
                 buffer.clear();
             } else if ch == '(' || ch == '[' || ch == '{' {
                 // Get end bracket.
-                let mut end_bracket = ')';
-                if ch == '[' {
-                    end_bracket = ']'
-                } else if ch == '{' {
-                    end_bracket = '}'
-                }
-                let end_bracket = end_bracket;
+                let begin_bracket = ch;
+
+                let end_bracket = match begin_bracket {
+                    '(' => ')',
+                    '{' => '}',
+                    '[' => ']',
+                    _ => panic!("Unknow error."),
+                };
+
+                let mut bracket_count: u32 = 1;
 
                 // Push character.
                 buffer.push(ch);
@@ -104,11 +107,15 @@ fn split_arguments(input: &String) -> Vec<String> {
                 loop {
                     let current = iter.next();
                     if let Option::Some(ch) = current {
-                        if ch == end_bracket {
-                            buffer.push(ch);
+                        if ch == begin_bracket {
+                            bracket_count += 1;
+                        } else if ch == end_bracket {
+                            bracket_count -= 1;
+                        }
+                        buffer.push(ch);
+
+                        if bracket_count == 0 {
                             break;
-                        } else {
-                            buffer.push(ch);
                         }
                     } else {
                         panic!("Illegal argument \"({})\".", input);
@@ -314,9 +321,9 @@ pub fn config_struct(
     }
     .into();
 
-    println!("{:+^40}{:+^40}", "config_struct", struct_name.to_string());
-    println!("{}", output);
-    println!("{:-^40}{:-^40}", "config_struct", struct_name.to_string());
+    //println!("{:+^40}{:+^40}", "config_struct", struct_name.to_string());
+    //println!("{}", output);
+    //println!("{:-^40}{:-^40}", "config_struct", struct_name.to_string());
 
     return output;
 }
