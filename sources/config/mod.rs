@@ -5,6 +5,10 @@ use std::io::Read;
 
 /// Config trait.
 pub trait ConfigType {
+    /// Create default config object.
+    ///
+    fn create_default() -> Self;
+
     /// Load json value.
     ///
     /// # Arguments
@@ -117,6 +121,12 @@ fn load_json_config<T: ConfigType>(
 // Implements of basic types.
 // Signed integer.
 impl ConfigType for i64 {
+    /// Create default config object.
+    ///
+    fn create_default() -> Self {
+        return 0;
+    }
+
     /// Load json value.
     ///
     /// # Arguments
@@ -168,6 +178,12 @@ impl ConfigType for i64 {
 }
 
 impl ConfigType for i32 {
+    /// Create default config object.
+    ///
+    fn create_default() -> Self {
+        return 0;
+    }
+
     /// Load json value.
     ///
     /// # Arguments
@@ -200,6 +216,12 @@ impl ConfigType for i32 {
 }
 
 impl ConfigType for i16 {
+    /// Create default config object.
+    ///
+    fn create_default() -> Self {
+        return 0;
+    }
+
     /// Load json value.
     ///
     /// # Arguments
@@ -232,6 +254,12 @@ impl ConfigType for i16 {
 }
 
 impl ConfigType for i8 {
+    /// Create default config object.
+    ///
+    fn create_default() -> Self {
+        return 0;
+    }
+
     /// Load json value.
     ///
     /// # Arguments
@@ -265,6 +293,12 @@ impl ConfigType for i8 {
 
 // Unsigned integer.
 impl ConfigType for u64 {
+    /// Create default config object.
+    ///
+    fn create_default() -> Self {
+        return 0;
+    }
+
     /// Load json value.
     ///
     /// # Arguments
@@ -316,6 +350,12 @@ impl ConfigType for u64 {
 }
 
 impl ConfigType for u32 {
+    /// Create default config object.
+    ///
+    fn create_default() -> Self {
+        return 0;
+    }
+
     /// Load json value.
     ///
     /// # Arguments
@@ -348,6 +388,12 @@ impl ConfigType for u32 {
 }
 
 impl ConfigType for u16 {
+    /// Create default config object.
+    ///
+    fn create_default() -> Self {
+        return 0;
+    }
+
     /// Load json value.
     ///
     /// # Arguments
@@ -380,6 +426,12 @@ impl ConfigType for u16 {
 }
 
 impl ConfigType for u8 {
+    /// Create default config object.
+    ///
+    fn create_default() -> Self {
+        return 0;
+    }
+
     /// Load json value.
     ///
     /// # Arguments
@@ -413,6 +465,12 @@ impl ConfigType for u8 {
 
 // boolean.
 impl ConfigType for bool {
+    /// Create default config object.
+    ///
+    fn create_default() -> Self {
+        return false;
+    }
+
     /// Load json value.
     ///
     /// # Arguments
@@ -452,8 +510,60 @@ impl ConfigType for bool {
     }
 }
 
+// Option
+impl<T: ConfigType> ConfigType for Option<T> {
+    /// Create default config object.
+    ///
+    fn create_default() -> Self {
+        return Option::None;
+    }
+
+    /// Load json value.
+    ///
+    /// # Arguments
+    ///
+    /// * `self`        - Self.
+    /// * `value`       - Json value.
+    /// * `config_name` - Config name.
+    /// * `full_key`    - Full key.
+    fn load_json_value(
+        &mut self,
+        value: &::json::JsonValue,
+        config_name: &String,
+        full_key: &String,
+    ) -> Result<common::Unused, String> {
+        let mut val = T::create_default();
+        let ret = val.load_json_value(value, config_name, full_key);
+        *self = Option::Some(val);
+
+        return ret;
+    }
+
+    /// Get info string.
+    ///
+    /// # Arguments
+    ///
+    /// * `self`        - Self.
+    fn get_info_str(&self) -> Option<String> {
+        match self {
+            Option::Some(ref val) => {
+                return val.get_info_str();
+            }
+            Option::None => {
+                return Option::Some("none".to_string());
+            }
+        }
+    }
+}
+
 // String.
 impl ConfigType for String {
+    /// Create default config object.
+    ///
+    fn create_default() -> Self {
+        return String::new();
+    }
+
     /// Load json value.
     ///
     /// # Arguments
@@ -497,6 +607,12 @@ impl ConfigType for String {
 
 // ::std::path::PathBuf.
 impl ConfigType for ::std::path::PathBuf {
+    /// Create default config object.
+    ///
+    fn create_default() -> Self {
+        return ::std::path::PathBuf::new();
+    }
+
     /// Load json value.
     ///
     /// # Arguments
@@ -540,6 +656,12 @@ impl ConfigType for ::std::path::PathBuf {
 
 // ::log::Level.
 impl ConfigType for ::log::Level {
+    /// Create default config object.
+    ///
+    fn create_default() -> Self {
+        return ::log::Level::Info;
+    }
+
     /// Load json value.
     ///
     /// # Arguments
@@ -650,6 +772,12 @@ pub enum User {
 
 // User.
 impl ConfigType for User {
+    /// Create default config object.
+    ///
+    fn create_default() -> Self {
+        return User::Uid(::nix::unistd::Uid::from_raw(0));
+    }
+
     /// Load json value.
     ///
     /// # Arguments
@@ -704,6 +832,12 @@ pub enum Group {
 
 // Group.
 impl ConfigType for Group {
+    /// Create default config object.
+    ///
+    fn create_default() -> Self {
+        return Group::Gid(::nix::unistd::Gid::from_raw(0));
+    }
+
     /// Load json value.
     ///
     /// # Arguments
@@ -805,12 +939,9 @@ pub struct Config {
 impl Config {
     /// Create new config object.
     ///
-    /// # Arguments
-    ///
-    /// * `path` - Path of the config file
-    pub fn new(path: ::std::path::PathBuf) -> Self {
+    pub fn new() -> Self {
         return Config {
-            config_path: path,
+            config_path: ::std::path::PathBuf::new(),
             service_config: ServiceConfig::new(),
             log_config: LogConfig::new(),
         };
@@ -853,7 +984,8 @@ pub fn load_config(path: ::std::path::PathBuf) -> Result<common::Unused, String>
     };
 
     // Load config.
-    let mut config = Config::new(path);
+    let mut config = Config::new();
+    config.config_path = path;
     if let Result::Err(error) = load_json_config(
         &mut config,
         &parsed_json,

@@ -346,6 +346,12 @@ pub fn config_struct(
 
 
         impl ConfigType for #struct_name {
+            /// Create default config object.
+            ///
+            fn create_default() -> Self{
+                return #struct_name::new();
+            }
+
             /// Load json value.
             ///
             /// # Arguments
