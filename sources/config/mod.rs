@@ -31,11 +31,6 @@ fn find_node_by_path<'root_lifetime>(
     if key.len() == 0 {
         return Result::Ok(ret);
     }
-    //TODO
-    println!("-----------------{}------------", key);
-    for name in key.split('/') {
-        println!("{}", name);
-    }
 
     // Search value.
     for name in key.split('/') {
@@ -244,12 +239,14 @@ impl ConfigType for String {
     /// * `self`    - Self.
     /// * `value`   - Json value.
     fn load_json_value(&mut self, value: &::json::JsonValue) -> Result<common::Unused, String> {
-        if let ::json::JsonValue::String(ref value_string) = value {
-            *self = value_string.clone();
-            return Result::Ok(common::Unused {});
-        } else {
-            return Result::Err("The value is not a string.".to_string());
-        }
+        *self = match value {
+            ::json::JsonValue::Short(ref value_string) => value_string.to_string(),
+            ::json::JsonValue::String(ref value_string) => value_string.clone(),
+            _ => {
+                return Result::Err("The value is not a string.".to_string());
+            }
+        };
+        return Result::Ok(common::Unused {});
     }
 }
 
@@ -262,12 +259,14 @@ impl ConfigType for ::std::path::PathBuf {
     /// * `self`    - Self.
     /// * `value`   - Json value.
     fn load_json_value(&mut self, value: &::json::JsonValue) -> Result<common::Unused, String> {
-        if let ::json::JsonValue::String(ref value_string) = value {
-            self.set_file_name(value_string);
-            return Result::Ok(common::Unused {});
-        } else {
-            return Result::Err("The value is not a string.".to_string());
-        }
+        self.set_file_name(match value {
+            ::json::JsonValue::Short(ref value_string) => value_string.to_string(),
+            ::json::JsonValue::String(ref value_string) => value_string.clone(),
+            _ => {
+                return Result::Err("The value is not a string.".to_string());
+            }
+        });
+        return Result::Ok(common::Unused {});
     }
 }
 
@@ -280,23 +279,28 @@ impl ConfigType for ::log::Level {
     /// * `self`    - Self.
     /// * `value`   - Json value.
     fn load_json_value(&mut self, value: &::json::JsonValue) -> Result<common::Unused, String> {
-        if let ::json::JsonValue::String(ref value_string) = value {
-            *self = match value_string.as_str() {
-                "Trace" => ::log::Level::Trace,
-                "Debug" => ::log::Level::Debug,
-                "Info" => ::log::Level::Info,
-                "Warn" => ::log::Level::Warn,
-                "Error" => ::log::Level::Error,
-                _ => {
-                    return Result::Err(
-                        ::std::format!("Illegale log level \"{}\".", value_string).to_string(),
-                    );
-                }
-            };
-            return Result::Ok(common::Unused {});
-        } else {
-            return Result::Err("The value is not a string.".to_string());
-        }
+        let level_string = match value {
+            ::json::JsonValue::Short(ref value_string) => value_string.to_string(),
+            ::json::JsonValue::String(ref value_string) => value_string.clone(),
+            _ => {
+                return Result::Err("The value is not a string.".to_string());
+            }
+        };
+
+        *self = match level_string.as_str() {
+            "Trace" => ::log::Level::Trace,
+            "Debug" => ::log::Level::Debug,
+            "Info" => ::log::Level::Info,
+            "Warn" => ::log::Level::Warn,
+            "Error" => ::log::Level::Error,
+            _ => {
+                return Result::Err(
+                    ::std::format!("Illegale log level \"{}\".", level_string).to_string(),
+                );
+            }
+        };
+
+        return Result::Ok(common::Unused {});
     }
 }
 
