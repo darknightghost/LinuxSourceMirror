@@ -1,32 +1,32 @@
 {
-	"log_path": "/var/log/linux-mirror/log",
-	"log_level": "Info",
-	"max_log_days": 10,
-	"data_path":"/pool/mirror",
-	"user":1000,
-	"group":983,
-    "pid_file":"/run/linux-mirror/linux-mirror.pid",
+	"log_path" : "/var/log/linux-mirror/log",
+	"log_level" : "Info",
+	"max_log_days" : 10,
+	"data_path" : "/pool/mirror",
+	"user" : 1000,
+	"group" : 983,
+    "pid_file" : "/run/linux-mirror/linux-mirror.pid",
 	"client_protocols" : {
 		"rsync" : {
-			"exec":"rsync",
-			"interval":10,
-			"max_connection": 2
+			"exec" : "rsync",
+			"interval" : 10,
+			"max_connection" : 2
 		}
 	},
 	"server_protocols" : {
-		"http": {
-			"address":"0.0.0.0",
-			"port": 8000
+		"http" : {
+			"address" : "0.0.0.0",
+			"port" : 8000
 		}
 	},
 	"distros" : {
 		"archlinux" : {
-			"url":"rsync://rsync.mirrors.ustc.edu.cn/repo/archlinux/",
-			"servers":["http"]
+			"url" : "rsync://rsync.mirrors.ustc.edu.cn/repo/archlinux/",
+			"servers" : ["http"]
 		},
 		"archlinuxcn" : {
-			"url":"rsync://rsync.mirrors.ustc.edu.cn/repo/archlinuxcn/",
-			"servers":["http"]
+			"url" : "rsync://rsync.mirrors.ustc.edu.cn/repo/archlinuxcn/",
+			"servers" : ["http"]
 		}
 	}
 }

@@ -617,6 +617,7 @@ impl ConfigType for User {
         full_key: &String,
     ) -> Result<common::Unused, String> {
         *self = match value {
+            ::json::JsonValue::Short(ref value_string) => User::Username(value_string.to_string()),
             ::json::JsonValue::String(ref value_string) => User::Username(value_string.to_string()),
             ::json::JsonValue::Number(ref value_num) => User::Uid(::nix::unistd::Uid::from_raw(
                 value_num.as_fixed_point_u64(0).unwrap() as u32,
@@ -670,6 +671,9 @@ impl ConfigType for Group {
         full_key: &String,
     ) -> Result<common::Unused, String> {
         *self = match value {
+            ::json::JsonValue::Short(ref value_string) => {
+                Group::GroupName(value_string.to_string())
+            }
             ::json::JsonValue::String(ref value_string) => {
                 Group::GroupName(value_string.to_string())
             }
