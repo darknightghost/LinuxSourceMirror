@@ -58,6 +58,20 @@ fn parse_value_str(value_str: String) -> Box<dyn::std::any::Any> {
         return Box::new(ret);
     }
 
+    // Is boolean?
+    let exp = ::regex::Regex::new("^(true|false)$").unwrap();
+    let cap_result = exp.captures(value_str.as_str());
+    if let Option::Some(cap) = cap_result {
+        let ret: bool = match cap.get(1).unwrap().as_str() {
+            "true" => true,
+            "false" => false,
+            _ => {
+                panic!("Unknow error!");
+            }
+        };
+        return Box::new(ret);
+    }
+
     // Is string?
     let exp = ::regex::Regex::new("^\"(.*)\"$").unwrap();
     let cap_result = exp.captures(value_str.as_str());
@@ -189,11 +203,15 @@ struct ConfigFieldInfo {
 
     /// Key.
     key: String,
+
+    /// Optional.
+    optional: bool,
 }
 
 impl ConfigFieldInfo {
     fn new(args: Vec<AttributeArgument>, field_name: proc_macro2::Ident) -> ConfigFieldInfo {
         let mut key: Option<String> = Option::None;
+        let mut optional = false;
 
         // Parse arguments.
         for arg in args.iter() {
@@ -207,6 +225,9 @@ impl ConfigFieldInfo {
                                 .unwrap()
                                 .to_string(),
                         );
+                    }
+                    "optional" => {
+                        optional = arg.value.as_ref().downcast_ref::<bool>().unwrap().clone();
                     }
                     _ => {
                         panic!(
@@ -229,6 +250,7 @@ impl ConfigFieldInfo {
         return ConfigFieldInfo {
             field_name: field_name,
             key: key.unwrap(),
+            optional: optional,
         };
     }
 }
@@ -284,6 +306,7 @@ pub fn config_struct(
         let field = info.field_name.clone();
         let field_str = info.field_name.to_string();
         let key = info.key.clone();
+        let optional = info.optional.clone();
 
         load_code = ::quote::quote! {
             #load_code
@@ -300,6 +323,7 @@ pub fn config_struct(
                 &mut self.#field,
                 value,
                 &(#key.to_string()),
+                #optional,
                 &value_config_name,
                 &value_full_key
             );

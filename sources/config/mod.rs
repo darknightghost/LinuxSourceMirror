@@ -81,14 +81,17 @@ fn find_node_by_path<'root_lifetime>(
 ///
 /// # Arguments
 ///
+/// * `output`      - Output config.
 /// * `root`        - Root json object.
 /// * `key`         - Key to load.
+/// * `optional`    - Optional.
 /// * `config_name` - Config name.
 /// * `full_key`    - Full key.
 fn load_json_config<T: ConfigType>(
     output: &mut T,
     root: &::json::JsonValue,
     key: &String,
+    optional: bool,
     config_name: &String,
     full_key: &String,
 ) -> Result<common::Unused, String> {
@@ -102,7 +105,11 @@ fn load_json_config<T: ConfigType>(
             }
         },
         Result::Err(err_string) => {
-            return Result::Err(err_string);
+            if optional {
+                return Result::Ok(common::Unused {});
+            } else {
+                return Result::Err(err_string);
+            }
         }
     }
 }
@@ -392,6 +399,47 @@ impl ConfigType for u8 {
         *self = val as u8;
 
         return ret;
+    }
+
+    /// Get info string.
+    ///
+    /// # Arguments
+    ///
+    /// * `self`        - Self.
+    fn get_info_str(&self) -> Option<String> {
+        return Option::Some(::std::format!("{}", self));
+    }
+}
+
+// boolean.
+impl ConfigType for bool {
+    /// Load json value.
+    ///
+    /// # Arguments
+    ///
+    /// * `self`        - Self.
+    /// * `value`       - Json value.
+    /// * `config_name` - Config name.
+    /// * `full_key`    - Full key.
+    fn load_json_value(
+        &mut self,
+        value: &::json::JsonValue,
+        config_name: &String,
+        full_key: &String,
+    ) -> Result<common::Unused, String> {
+        if let ::json::JsonValue::Boolean(ref json_bool) = value {
+            *self = json_bool.clone();
+            return Result::Ok(common::Unused {});
+        } else {
+            return Result::Err(
+                ::std::format!(
+                    "Failed to load config \"{}\", key = \"{}\", the value is not boolean.",
+                    config_name,
+                    full_key
+                )
+                .to_string(),
+            );
+        }
     }
 
     /// Get info string.
@@ -810,6 +858,7 @@ pub fn load_config(path: ::std::path::PathBuf) -> Result<common::Unused, String>
         &mut config,
         &parsed_json,
         &("".to_string()),
+        false,
         &("config".to_string()),
         &("".to_string()),
     ) {

@@ -12,7 +12,7 @@
 			"interval" : 10,
 			"max_connection" : 2
 		}
-	},
+    },
 	"server_protocols" : {
 		"http" : {
 			"address" : "0.0.0.0",
