@@ -9,9 +9,23 @@ pub trait ConfigType {
     ///
     /// # Arguments
     ///
-    /// * `self`    - Self.
-    /// * `value`   - Json value.
-    fn load_json_value(&mut self, value: &::json::JsonValue) -> Result<common::Unused, String>;
+    /// * `self`        - Self.
+    /// * `value`       - Json value.
+    /// * `config_name` - Config name.
+    /// * `full_key`    - Full key.
+    fn load_json_value(
+        &mut self,
+        value: &::json::JsonValue,
+        config_name: &String,
+        full_key: &String,
+    ) -> Result<common::Unused, String>;
+
+    /// Get info string.
+    ///
+    /// # Arguments
+    ///
+    /// * `self`        - Self.
+    fn get_info_str(&self) -> Option<String>;
 }
 
 /// Find node by path.
@@ -67,15 +81,19 @@ fn find_node_by_path<'root_lifetime>(
 ///
 /// # Arguments
 ///
-/// * `root`    - Root json object.
-/// * `key`     - Key to load.
+/// * `root`        - Root json object.
+/// * `key`         - Key to load.
+/// * `config_name` - Config name.
+/// * `full_key`    - Full key.
 fn load_json_config<T: ConfigType>(
     output: &mut T,
     root: &::json::JsonValue,
     key: &String,
+    config_name: &String,
+    full_key: &String,
 ) -> Result<common::Unused, String> {
     match find_node_by_path(root, key) {
-        Result::Ok(value) => match output.load_json_value(value) {
+        Result::Ok(value) => match output.load_json_value(value, config_name, full_key) {
             Result::Ok(_) => {
                 return Result::Ok(common::Unused {});
             }
@@ -96,19 +114,49 @@ impl ConfigType for i64 {
     ///
     /// # Arguments
     ///
-    /// * `self`    - Self.
-    /// * `value`   - Json value.
-    fn load_json_value(&mut self, value: &::json::JsonValue) -> Result<common::Unused, String> {
+    /// * `self`        - Self.
+    /// * `value`       - Json value.
+    /// * `config_name` - Config name.
+    /// * `full_key`    - Full key.
+    fn load_json_value(
+        &mut self,
+        value: &::json::JsonValue,
+        config_name: &String,
+        full_key: &String,
+    ) -> Result<common::Unused, String> {
         if let ::json::JsonValue::Number(ref json_num) = value {
             if let Option::Some(ref num) = json_num.as_fixed_point_i64(0) {
                 *self = num.clone();
                 return Result::Ok(common::Unused {});
             } else {
-                return Result::Err("The value is not unsigned.".to_string());
+                return Result::Err(
+                    ::std::format!(
+                        "Failed to load config \"{}\", key = \"{}\", the value is not unsigned.",
+                        config_name,
+                        full_key
+                    )
+                    .to_string(),
+                );
             }
         } else {
-            return Result::Err("The value is not a number.".to_string());
+            return Result::Err(
+                ::std::format!(
+                    "Failed to load config \"{}\", key = \"{}\", the value is not a number.",
+                    config_name,
+                    full_key
+                )
+                .to_string(),
+            );
         }
+    }
+
+    /// Get info string.
+    ///
+    /// # Arguments
+    ///
+    /// * `self`        - Self.
+    fn get_info_str(&self) -> Option<String> {
+        return Option::Some(::std::format!("{}", self));
     }
 }
 
@@ -117,14 +165,30 @@ impl ConfigType for i32 {
     ///
     /// # Arguments
     ///
-    /// * `self`    - Self.
-    /// * `value`   - Json value.
-    fn load_json_value(&mut self, value: &::json::JsonValue) -> Result<common::Unused, String> {
+    /// * `self`        - Self.
+    /// * `value`       - Json value.
+    /// * `config_name` - Config name.
+    /// * `full_key`    - Full key.
+    fn load_json_value(
+        &mut self,
+        value: &::json::JsonValue,
+        config_name: &String,
+        full_key: &String,
+    ) -> Result<common::Unused, String> {
         let mut val: i64 = 0;
-        let ret = val.load_json_value(value);
+        let ret = val.load_json_value(value, config_name, full_key);
         *self = val as i32;
 
         return ret;
+    }
+
+    /// Get info string.
+    ///
+    /// # Arguments
+    ///
+    /// * `self`        - Self.
+    fn get_info_str(&self) -> Option<String> {
+        return Option::Some(::std::format!("{}", self));
     }
 }
 
@@ -133,14 +197,30 @@ impl ConfigType for i16 {
     ///
     /// # Arguments
     ///
-    /// * `self`    - Self.
-    /// * `value`   - Json value.
-    fn load_json_value(&mut self, value: &::json::JsonValue) -> Result<common::Unused, String> {
+    /// * `self`        - Self.
+    /// * `value`       - Json value.
+    /// * `config_name` - Config name.
+    /// * `full_key`    - Full key.
+    fn load_json_value(
+        &mut self,
+        value: &::json::JsonValue,
+        config_name: &String,
+        full_key: &String,
+    ) -> Result<common::Unused, String> {
         let mut val: i64 = 0;
-        let ret = val.load_json_value(value);
+        let ret = val.load_json_value(value, config_name, full_key);
         *self = val as i16;
 
         return ret;
+    }
+
+    /// Get info string.
+    ///
+    /// # Arguments
+    ///
+    /// * `self`        - Self.
+    fn get_info_str(&self) -> Option<String> {
+        return Option::Some(::std::format!("{}", self));
     }
 }
 
@@ -149,14 +229,30 @@ impl ConfigType for i8 {
     ///
     /// # Arguments
     ///
-    /// * `self`    - Self.
-    /// * `value`   - Json value.
-    fn load_json_value(&mut self, value: &::json::JsonValue) -> Result<common::Unused, String> {
+    /// * `self`        - Self.
+    /// * `value`       - Json value.
+    /// * `config_name` - Config name.
+    /// * `full_key`    - Full key.
+    fn load_json_value(
+        &mut self,
+        value: &::json::JsonValue,
+        config_name: &String,
+        full_key: &String,
+    ) -> Result<common::Unused, String> {
         let mut val: i64 = 0;
-        let ret = val.load_json_value(value);
+        let ret = val.load_json_value(value, config_name, full_key);
         *self = val as i8;
 
         return ret;
+    }
+
+    /// Get info string.
+    ///
+    /// # Arguments
+    ///
+    /// * `self`        - Self.
+    fn get_info_str(&self) -> Option<String> {
+        return Option::Some(::std::format!("{}", self));
     }
 }
 
@@ -166,19 +262,49 @@ impl ConfigType for u64 {
     ///
     /// # Arguments
     ///
-    /// * `self`    - Self.
-    /// * `value`   - Json value.
-    fn load_json_value(&mut self, value: &::json::JsonValue) -> Result<common::Unused, String> {
+    /// * `self`        - Self.
+    /// * `value`       - Json value.
+    /// * `config_name` - Config name.
+    /// * `full_key`    - Full key.
+    fn load_json_value(
+        &mut self,
+        value: &::json::JsonValue,
+        config_name: &String,
+        full_key: &String,
+    ) -> Result<common::Unused, String> {
         if let ::json::JsonValue::Number(ref json_num) = value {
             if let Option::Some(ref num) = json_num.as_fixed_point_u64(0) {
                 *self = num.clone();
                 return Result::Ok(common::Unused {});
             } else {
-                return Result::Err("The value is not unsigned.".to_string());
+                return Result::Err(
+                    ::std::format!(
+                        "Failed to load config \"{}\", key = \"{}\", the value is not unsigned.",
+                        config_name,
+                        full_key
+                    )
+                    .to_string(),
+                );
             }
         } else {
-            return Result::Err("The value is not a number.".to_string());
+            return Result::Err(
+                ::std::format!(
+                    "Failed to load config \"{}\", key = \"{}\", the value is not a number.",
+                    config_name,
+                    full_key
+                )
+                .to_string(),
+            );
         }
+    }
+
+    /// Get info string.
+    ///
+    /// # Arguments
+    ///
+    /// * `self`        - Self.
+    fn get_info_str(&self) -> Option<String> {
+        return Option::Some(::std::format!("{}", self));
     }
 }
 
@@ -187,14 +313,30 @@ impl ConfigType for u32 {
     ///
     /// # Arguments
     ///
-    /// * `self`    - Self.
-    /// * `value`   - Json value.
-    fn load_json_value(&mut self, value: &::json::JsonValue) -> Result<common::Unused, String> {
+    /// * `self`        - Self.
+    /// * `value`       - Json value.
+    /// * `config_name` - Config name.
+    /// * `full_key`    - Full key.
+    fn load_json_value(
+        &mut self,
+        value: &::json::JsonValue,
+        config_name: &String,
+        full_key: &String,
+    ) -> Result<common::Unused, String> {
         let mut val: u64 = 0;
-        let ret = val.load_json_value(value);
+        let ret = val.load_json_value(value, config_name, full_key);
         *self = val as u32;
 
         return ret;
+    }
+
+    /// Get info string.
+    ///
+    /// # Arguments
+    ///
+    /// * `self`        - Self.
+    fn get_info_str(&self) -> Option<String> {
+        return Option::Some(::std::format!("{}", self));
     }
 }
 
@@ -203,14 +345,30 @@ impl ConfigType for u16 {
     ///
     /// # Arguments
     ///
-    /// * `self`    - Self.
-    /// * `value`   - Json value.
-    fn load_json_value(&mut self, value: &::json::JsonValue) -> Result<common::Unused, String> {
+    /// * `self`        - Self.
+    /// * `value`       - Json value.
+    /// * `config_name` - Config name.
+    /// * `full_key`    - Full key.
+    fn load_json_value(
+        &mut self,
+        value: &::json::JsonValue,
+        config_name: &String,
+        full_key: &String,
+    ) -> Result<common::Unused, String> {
         let mut val: u64 = 0;
-        let ret = val.load_json_value(value);
+        let ret = val.load_json_value(value, config_name, full_key);
         *self = val as u16;
 
         return ret;
+    }
+
+    /// Get info string.
+    ///
+    /// # Arguments
+    ///
+    /// * `self`        - Self.
+    fn get_info_str(&self) -> Option<String> {
+        return Option::Some(::std::format!("{}", self));
     }
 }
 
@@ -219,14 +377,30 @@ impl ConfigType for u8 {
     ///
     /// # Arguments
     ///
-    /// * `self`    - Self.
-    /// * `value`   - Json value.
-    fn load_json_value(&mut self, value: &::json::JsonValue) -> Result<common::Unused, String> {
+    /// * `self`        - Self.
+    /// * `value`       - Json value.
+    /// * `config_name` - Config name.
+    /// * `full_key`    - Full key.
+    fn load_json_value(
+        &mut self,
+        value: &::json::JsonValue,
+        config_name: &String,
+        full_key: &String,
+    ) -> Result<common::Unused, String> {
         let mut val: u64 = 0;
-        let ret = val.load_json_value(value);
+        let ret = val.load_json_value(value, config_name, full_key);
         *self = val as u8;
 
         return ret;
+    }
+
+    /// Get info string.
+    ///
+    /// # Arguments
+    ///
+    /// * `self`        - Self.
+    fn get_info_str(&self) -> Option<String> {
+        return Option::Some(::std::format!("{}", self));
     }
 }
 
@@ -236,17 +410,40 @@ impl ConfigType for String {
     ///
     /// # Arguments
     ///
-    /// * `self`    - Self.
-    /// * `value`   - Json value.
-    fn load_json_value(&mut self, value: &::json::JsonValue) -> Result<common::Unused, String> {
+    /// * `self`        - Self.
+    /// * `value`       - Json value.
+    /// * `config_name` - Config name.
+    /// * `full_key`    - Full key.
+    fn load_json_value(
+        &mut self,
+        value: &::json::JsonValue,
+        config_name: &String,
+        full_key: &String,
+    ) -> Result<common::Unused, String> {
         *self = match value {
             ::json::JsonValue::Short(ref value_string) => value_string.to_string(),
             ::json::JsonValue::String(ref value_string) => value_string.clone(),
             _ => {
-                return Result::Err("The value is not a string.".to_string());
+                return Result::Err(
+                    ::std::format!(
+                        "Failed to load config \"{}\", key = \"{}\", the value is not a string.",
+                        config_name,
+                        full_key
+                    )
+                    .to_string(),
+                );
             }
         };
         return Result::Ok(common::Unused {});
+    }
+
+    /// Get info string.
+    ///
+    /// # Arguments
+    ///
+    /// * `self`        - Self.
+    fn get_info_str(&self) -> Option<String> {
+        return Option::Some(::std::format!("\"{}\"", self));
     }
 }
 
@@ -256,17 +453,40 @@ impl ConfigType for ::std::path::PathBuf {
     ///
     /// # Arguments
     ///
-    /// * `self`    - Self.
-    /// * `value`   - Json value.
-    fn load_json_value(&mut self, value: &::json::JsonValue) -> Result<common::Unused, String> {
+    /// * `self`        - Self.
+    /// * `value`       - Json value.
+    /// * `config_name` - Config name.
+    /// * `full_key`    - Full key.
+    fn load_json_value(
+        &mut self,
+        value: &::json::JsonValue,
+        config_name: &String,
+        full_key: &String,
+    ) -> Result<common::Unused, String> {
         self.set_file_name(match value {
             ::json::JsonValue::Short(ref value_string) => value_string.to_string(),
             ::json::JsonValue::String(ref value_string) => value_string.clone(),
             _ => {
-                return Result::Err("The value is not a string.".to_string());
+                return Result::Err(
+                    ::std::format!(
+                        "Failed to load config \"{}\", key = \"{}\", the value is not a string.",
+                        config_name,
+                        full_key
+                    )
+                    .to_string(),
+                );
             }
         });
         return Result::Ok(common::Unused {});
+    }
+
+    /// Get info string.
+    ///
+    /// # Arguments
+    ///
+    /// * `self`        - Self.
+    fn get_info_str(&self) -> Option<String> {
+        return Option::Some(::std::format!("Path(\"{}\")", self.to_str().unwrap()));
     }
 }
 
@@ -276,14 +496,28 @@ impl ConfigType for ::log::Level {
     ///
     /// # Arguments
     ///
-    /// * `self`    - Self.
-    /// * `value`   - Json value.
-    fn load_json_value(&mut self, value: &::json::JsonValue) -> Result<common::Unused, String> {
+    /// * `self`        - Self.
+    /// * `value`       - Json value.
+    /// * `config_name` - Config name.
+    /// * `full_key`    - Full key.
+    fn load_json_value(
+        &mut self,
+        value: &::json::JsonValue,
+        config_name: &String,
+        full_key: &String,
+    ) -> Result<common::Unused, String> {
         let level_string = match value {
             ::json::JsonValue::Short(ref value_string) => value_string.to_string(),
             ::json::JsonValue::String(ref value_string) => value_string.clone(),
             _ => {
-                return Result::Err("The value is not a string.".to_string());
+                return Result::Err(
+                    ::std::format!(
+                        "Failed to load config \"{}\", key = \"{}\", the value is not a string.",
+                        config_name,
+                        full_key
+                    )
+                    .to_string(),
+                );
             }
         };
 
@@ -295,12 +529,34 @@ impl ConfigType for ::log::Level {
             "Error" => ::log::Level::Error,
             _ => {
                 return Result::Err(
-                    ::std::format!("Illegale log level \"{}\".", level_string).to_string(),
-                );
+                ::std::format!(
+                    "Failed to load config \"{}\", key = \"{}\", illegale log level \"{}\", the log level should be \"Trace\", \"Debug\", \"Info\", \"Warn\" or \"Error\".",
+                    config_name,
+                    full_key,level_string
+                )
+                .to_string(),
+            );
             }
         };
 
         return Result::Ok(common::Unused {});
+    }
+
+    /// Get info string.
+    ///
+    /// # Arguments
+    ///
+    /// * `self`        - Self.
+    fn get_info_str(&self) -> Option<String> {
+        let info_str = match self {
+            ::log::Level::Trace => "Trace",
+            ::log::Level::Debug => "Debug",
+            ::log::Level::Info => "Info",
+            ::log::Level::Warn => "Warn",
+            ::log::Level::Error => "Error",
+        };
+
+        return Option::Some(::std::format!("{}", info_str));
     }
 }
 
@@ -350,9 +606,16 @@ impl ConfigType for User {
     ///
     /// # Arguments
     ///
-    /// * `self`    - Self.
-    /// * `value`   - Json value.
-    fn load_json_value(&mut self, value: &::json::JsonValue) -> Result<common::Unused, String> {
+    /// * `self`        - Self.
+    /// * `value`       - Json value.
+    /// * `config_name` - Config name.
+    /// * `full_key`    - Full key.
+    fn load_json_value(
+        &mut self,
+        value: &::json::JsonValue,
+        config_name: &String,
+        full_key: &String,
+    ) -> Result<common::Unused, String> {
         *self = match value {
             ::json::JsonValue::String(ref value_string) => User::Username(value_string.to_string()),
             ::json::JsonValue::Number(ref value_num) => User::Uid(::nix::unistd::Uid::from_raw(
@@ -364,6 +627,20 @@ impl ConfigType for User {
         };
 
         return Result::Ok(common::Unused {});
+    }
+
+    /// Get info string.
+    ///
+    /// # Arguments
+    ///
+    /// * `self`        - Self.
+    fn get_info_str(&self) -> Option<String> {
+        let info_str = match self {
+            User::Username(ref value) => ::std::format!("Username(\"{}\")", value),
+            User::Uid(ref value) => ::std::format!("Uid({})", value),
+        };
+
+        return Option::Some(::std::format!("{}", info_str));
     }
 }
 
@@ -382,9 +659,16 @@ impl ConfigType for Group {
     ///
     /// # Arguments
     ///
-    /// * `self`    - Self.
-    /// * `value`   - Json value.
-    fn load_json_value(&mut self, value: &::json::JsonValue) -> Result<common::Unused, String> {
+    /// * `self`        - Self.
+    /// * `value`       - Json value.
+    /// * `config_name` - Config name.
+    /// * `full_key`    - Full key.
+    fn load_json_value(
+        &mut self,
+        value: &::json::JsonValue,
+        config_name: &String,
+        full_key: &String,
+    ) -> Result<common::Unused, String> {
         *self = match value {
             ::json::JsonValue::String(ref value_string) => {
                 Group::GroupName(value_string.to_string())
@@ -398,6 +682,20 @@ impl ConfigType for Group {
         };
 
         return Result::Ok(common::Unused {});
+    }
+
+    /// Get info string.
+    ///
+    /// # Arguments
+    ///
+    /// * `self`        - Self.
+    fn get_info_str(&self) -> Option<String> {
+        let info_str = match self {
+            Group::GroupName(ref value) => ::std::format!("GroupName(\"{}\")", value),
+            Group::Gid(ref value) => ::std::format!("Gid({})", value),
+        };
+
+        return Option::Some(::std::format!("{}", info_str));
     }
 }
 
@@ -504,7 +802,13 @@ pub fn load_config(path: ::std::path::PathBuf) -> Result<common::Unused, String>
 
     // Load config.
     let mut config = Config::new(path);
-    if let Result::Err(error) = load_json_config(&mut config, &parsed_json, &("".to_string())) {
+    if let Result::Err(error) = load_json_config(
+        &mut config,
+        &parsed_json,
+        &("".to_string()),
+        &("config".to_string()),
+        &("".to_string()),
+    ) {
         return Result::Err(error);
     }
     unsafe {

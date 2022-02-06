@@ -1,7 +1,7 @@
 {
 	"log_path": "/var/log/linux-mirror/log",
 	"log_level": "Info",
-	"max_log_days":10,
+	"max_log_days": 10,
 	"data_path":"/pool/mirror",
 	"user":1000,
 	"group":983,

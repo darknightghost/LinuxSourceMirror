@@ -282,15 +282,35 @@ pub fn config_struct(
     let mut load_code = ::quote::quote! {};
     for info in fields_info.iter() {
         let field = info.field_name.clone();
+        let field_str = info.field_name.to_string();
         let key = info.key.clone();
 
         load_code = ::quote::quote! {
             #load_code
 
-            ret = load_json_config(&mut self.#field, value, &#key.to_string());
+            let value_full_key = match full_key.len() {
+                0 => #key.to_string(),
+                _ => ::std::format!("{}/{}", full_key, #key).to_string(),
+            };
+            let value_config_name = ::std::format!("{}.{}",
+                                                   config_name,
+                                                   #field_str).to_string();
+
+            ret = load_json_config(
+                &mut self.#field,
+                value,
+                &(#key.to_string()),
+                &value_config_name,
+                &value_full_key
+            );
             if let Result::Err(ref s) = ret {
                 return ret;
             }
+
+            if let Option::Some(value_str) = self.#field.get_info_str() {
+                println!("{:<40} = {}",value_config_name, value_str);
+            }
+
         };
     }
 
@@ -306,24 +326,37 @@ pub fn config_struct(
             ///
             /// # Arguments
             ///
-            /// * `self`    - Self.
-            /// * `value`   - Json value.
+            /// * `self`        - Self.
+            /// * `value`       - Json value.
+            /// * `config_name` - Config name.
+            /// * `full_key`    - Full key.
             fn load_json_value(
                 &mut self,
-                value: &::json::JsonValue) -> Result<common::Unused, String> {
+                value: &::json::JsonValue,
+                config_name: &String,
+                full_key: &String,) -> Result<common::Unused, String> {
                 let mut ret = Result::Ok(common::Unused{});
 
                 #load_code
 
                 return ret;
             }
+
+            /// Get info string.
+            ///
+            /// # Arguments
+            ///
+            /// * `self`        - Self.
+            fn get_info_str(&self) -> Option<String> {
+                return Option::None;
+            }
         }
     }
     .into();
 
-    //println!("{:+^40}{:+^40}", "config_struct", struct_name.to_string());
-    //println!("{}", output);
-    //println!("{:-^40}{:-^40}", "config_struct", struct_name.to_string());
+    println!("{:+^40}{:+^40}", "config_struct", struct_name.to_string());
+    println!("{}", output);
+    println!("{:-^40}{:-^40}", "config_struct", struct_name.to_string());
 
     return output;
 }
