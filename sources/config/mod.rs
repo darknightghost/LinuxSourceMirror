@@ -38,9 +38,11 @@ pub trait ConfigType {
 ///
 /// * `root`    - Root json object.
 /// * `key`     - Key to load.
+/// * `config_name` - Config name.
 fn find_node_by_path<'root_lifetime>(
     root: &'root_lifetime ::json::JsonValue,
     key: &String,
+    config_name: &String,
 ) -> Result<&'root_lifetime ::json::JsonValue, String> {
     let mut ret = root;
     let mut scaned_keys: String = String::new();
@@ -67,13 +69,23 @@ fn find_node_by_path<'root_lifetime>(
 
                 Option::None => {
                     return Result::Err(
-                        ::std::format!("Key \"{}\" not found.", scaned_keys).to_string(),
+                        ::std::format!(
+                            "Key \"{}\" for config \"{}\" not found.",
+                            scaned_keys,
+                            config_name
+                        )
+                        .to_string(),
                     );
                 }
             }
         } else {
             return Result::Err(
-                ::std::format!("Key \"{}\" is not an object.", scaned_keys).to_string(),
+                ::std::format!(
+                    "Key \"{}\" is not an object, unable to load config \"{}\".",
+                    scaned_keys,
+                    config_name
+                )
+                .to_string(),
             );
         }
     }
@@ -99,7 +111,7 @@ fn load_json_config<T: ConfigType>(
     config_name: &String,
     full_key: &String,
 ) -> Result<common::Unused, String> {
-    match find_node_by_path(root, key) {
+    match find_node_by_path(root, key, config_name) {
         Result::Ok(value) => match output.load_json_value(value, config_name, full_key) {
             Result::Ok(_) => {
                 return Result::Ok(common::Unused {});
@@ -922,7 +934,48 @@ impl ServiceConfig {
 }
 
 #[config_struct]
-/// Config type.
+/// Rsync config.
+pub struct RsyncClientConfig {
+    #[config_field(key = "timeout_sec")]
+    /// Timeout seconds.
+    timeout_sec: u64,
+
+    #[config_field(key = "max_connection")]
+    /// Max connection.
+    max_connection: u32,
+}
+
+impl RsyncClientConfig {
+    /// Create new config object.
+    ///
+    pub fn new() -> Self {
+        return RsyncClientConfig {
+            timeout_sec: 10,
+            max_connection: 2,
+        };
+    }
+}
+
+#[config_struct]
+/// Client protocols config.
+pub struct ClientProtocolsConfig {
+    #[config_field(key = "rsync")]
+    /// Rsync config.
+    rsync: RsyncClientConfig,
+}
+
+impl ClientProtocolsConfig {
+    /// Create new config object.
+    ///
+    pub fn new() -> Self {
+        return ClientProtocolsConfig {
+            rsync: RsyncClientConfig::new(),
+        };
+    }
+}
+
+#[config_struct]
+/// Config.
 pub struct Config {
     /// Path of config file.
     config_path: ::std::path::PathBuf,
@@ -934,6 +987,10 @@ pub struct Config {
     #[config_field(key = "")]
     /// Log config.
     log_config: LogConfig,
+
+    #[config_field(key = "client_protocols")]
+    /// Client protocols config.
+    client_protocols: ClientProtocolsConfig,
 }
 
 impl Config {
@@ -944,6 +1001,7 @@ impl Config {
             config_path: ::std::path::PathBuf::new(),
             service_config: ServiceConfig::new(),
             log_config: LogConfig::new(),
+            client_protocols: ClientProtocolsConfig::new(),
         };
     }
 }

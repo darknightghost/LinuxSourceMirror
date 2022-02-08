@@ -8,8 +8,7 @@
     "pid_file" : "/run/linux-mirror/linux-mirror.pid",
 	"client_protocols" : {
 		"rsync" : {
-			"exec" : "rsync",
-			"interval" : 10,
+			"timeout_sec" : 10,
 			"max_connection" : 2
 		}
     },

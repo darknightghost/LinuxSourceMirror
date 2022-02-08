@@ -332,7 +332,7 @@ pub fn config_struct(
             }
 
             if let Option::Some(value_str) = self.#field.get_info_str() {
-                println!("{:<40} = {}",value_config_name, value_str);
+                println!("{:<56} = {}",value_config_name, value_str);
             }
 
         };
@@ -384,9 +384,9 @@ pub fn config_struct(
     }
     .into();
 
-    println!("{:+^40}{:+^40}", "config_struct", struct_name.to_string());
-    println!("{}", output);
-    println!("{:-^40}{:-^40}", "config_struct", struct_name.to_string());
+    //println!("{:+^40}{:+^40}", "config_struct", struct_name.to_string());
+    //println!("{}", output);
+    //println!("{:-^40}{:-^40}", "config_struct", struct_name.to_string());
 
     return output;
 }
